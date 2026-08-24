@@ -1,0 +1,16 @@
+export const TUTOR_PATH = {
+  GET_ALL_SUBJECTS: "/subjects",
+  GET_MY_PROFILE: "/tutors/my-profile",
+  UPDATE_PROFILE: "/tutors/my-profile",
+  GET_SUBJECTS: (tutorId: string | number) => `/tutors/${tutorId}/subjects`,
+  ADD_SUBJECT: "/tutors/subjects",
+  UPDATE_SUBJECT: (id: number) => `/tutors/subjects/${id}`,
+  DELETE_SUBJECT: (id: number) => `/tutors/subjects/${id}`,
+  GET_AVAILABILITY: (tutorId: string | number) => `/tutors/${tutorId}/availability`,
+  ADD_AVAILABILITY: "/tutors/availability",
+  UPDATE_AVAILABILITY: (id: number) => `/tutors/availability/${id}`,
+  DELETE_AVAILABILITY: (id: number) => `/tutors/availability/${id}`,
+  GET_REVIEWS: (tutorId: string | number) => `/tutors/${tutorId}/reviews`,
+  SEARCH: "/tutors",
+  GET_DETAIL: (id: string | number) => `/tutors/${id}`,
+};

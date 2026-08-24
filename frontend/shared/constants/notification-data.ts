@@ -1,0 +1,95 @@
+import { NotificationRecord } from "@/shared/types/notification";
+
+export const MOCK_NOTIFICATIONS: NotificationRecord[] = [
+  {
+    id: "1",
+    type: "REQUEST",
+    title: "Yêu cầu lớp học mới",
+    description: "Học sinh Lê Minh Anh đã gửi yêu cầu học môn Toán 12. Vui lòng kiểm tra và xác nhận lịch dạy.",
+    time: "5 phút trước",
+    isRead: false,
+  },
+  {
+    id: "2",
+    type: "APPROVAL",
+    title: "Hồ sơ đã được phê duyệt",
+    description: "Chúc mừng! Hồ sơ gia sư của bạn đã được hệ thống phê duyệt. Bạn có thể bắt đầu nhận lớp ngay bây giờ.",
+    time: "2 giờ trước",
+    isRead: false,
+  },
+  {
+    id: "3",
+    type: "SUCCESS",
+    title: "Thanh toán thành công",
+    description: "Giao dịch thanh toán học phí cho tháng 3 đã hoàn tất. Hóa đơn đã được gửi vào email của bạn.",
+    time: "Hôm qua",
+    isRead: true,
+  },
+  {
+    id: "4",
+    type: "REMINDER",
+    title: "Nhắc nhở giáo án",
+    description: "Đừng quên cập nhật giáo án cho buổi học ngày mai với học sinh Trần Đức Nam vào lúc 19:00.",
+    time: "2 ngày trước",
+    isRead: true,
+  },
+  {
+    id: "5",
+    type: "SYSTEM",
+    title: "Cập nhật hệ thống",
+    description: "Hệ thống sẽ bảo trì định kỳ vào lúc 02:00 sáng Chủ nhật tuần này. Vui lòng lưu lại các thay đổi quan trọng.",
+    time: "3 ngày trước",
+    isRead: true,
+  },
+  {
+    id: "6",
+    type: "REQUEST",
+    title: "Yêu cầu đổi lịch học",
+    description: "Phụ huynh bé Trương Thảo Nhi muốn đổi buổi học từ Thứ 2 sang Thứ 4. Vui lòng phản hồi sớm.",
+    time: "1 tuần trước",
+    isRead: true,
+  },
+];
+
+export const MOCK_TUTOR_NOTIFICATIONS: NotificationRecord[] = [
+  {
+    id: "t1",
+    type: "REQUEST",
+    title: "Yêu cầu dạy mới",
+    description: "Bạn có một yêu cầu dạy mới từ phụ huynh Nguyễn Văn A cho môn Vật Lý lớp 10.",
+    time: "10 phút trước",
+    isRead: false,
+  },
+  {
+    id: "t2",
+    type: "SUCCESS",
+    title: "Thu nhập mới",
+    description: "Bạn vừa nhận được 500.000đ từ buổi dạy môn Toán lớp 12 hôm qua.",
+    time: "1 giờ trước",
+    isRead: false,
+  },
+  {
+    id: "t3",
+    type: "REMINDER",
+    title: "Lịch dạy sắp tới",
+    description: "Đừng quên buổi dạy môn Hóa Học lớp 11 sẽ bắt đầu sau 30 phút nữa.",
+    time: "2 giờ trước",
+    isRead: false,
+  },
+  {
+    id: "t4",
+    type: "APPROVAL",
+    title: "Xét duyệt môn học",
+    description: "Môn Tiếng Anh lớp 9 bạn đăng ký đã được phê duyệt và hiển thị trên hồ sơ.",
+    time: "Hôm qua",
+    isRead: true,
+  },
+  {
+    id: "t5",
+    type: "SYSTEM",
+    title: "Thông báo cập nhật",
+    description: "Hệ thống đã cập nhật tính năng thanh toán mới. Vui lòng kiểm tra lại thông tin ngân hàng.",
+    time: "3 ngày trước",
+    isRead: true,
+  },
+];

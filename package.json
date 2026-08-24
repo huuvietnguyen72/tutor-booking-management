@@ -1,0 +1,20 @@
+{
+  "name": "tutors-booking-management-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "setup": "npm install --ignore-scripts && npm --prefix frontend ci",
+    "dev:backend": "mvnw.cmd spring-boot:run",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently --kill-others --names BACKEND,FRONTEND --prefix-colors blue,green npm:dev:backend npm:dev:frontend",
+    "build:backend": "mvnw.cmd clean package",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "test:backend": "mvnw.cmd test",
+    "test:frontend": "npm --prefix frontend run build",
+    "test": "npm run test:backend && npm run test:frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

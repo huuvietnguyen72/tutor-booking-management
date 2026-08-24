@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --border: #e2e8f0;
+  --muted: #f1f5f9;
+  --muted-foreground: #475569; /* Slate 600 - Better contrast for AA */
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --scrollbar-thumb: #bdc1c6;
+  --scrollbar-thumb-hover: #9aa0a6;
+  --auth-bg-from: #EEF2FF;
+  --auth-bg-via: #F5F7FF;
+  --auth-bg-to: #FFFFFF;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-primary: #3b82f6;
+  --color-primary-deep: #1d4ed8;
+  --color-auth-bg-from: var(--auth-bg-from);
+  --color-auth-bg-via: var(--auth-bg-via);
+  --color-auth-bg-to: var(--auth-bg-to);
+
+  --animate-shimmer: shimmer 2s infinite linear;
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  --animate-float: float 6s ease-in-out infinite;
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  --animate-float-slow: float-slow 10s ease-in-out infinite;
+  @keyframes float-slow {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(30px, -30px); }
+    66% { transform: translate(-20px, 20px); }
+  }
+
+  --animate-pulse-slow: pulse-slow 8s ease-in-out infinite;
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+  }
+
+  --animate-blob: blob 15s infinite;
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+}
+
+.dark {
+  --background: #020617; /* Slate 950 */
+  --foreground: #f1f5f9; /* Slate 100 */
+  --card: #0f172a; /* Slate 900 */
+  --card-foreground: #f1f5f9;
+  --border: #1e293b; /* Slate 800 */
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8; /* Slate 400 */
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
+  --popover: #0f172a;
+  --popover-foreground: #f1f5f9;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
+  --auth-bg-from: #020617;
+  --auth-bg-via: #0f172a;
+  --auth-bg-to: #020617;
+}
+
+@layer base {
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #d7ddfc inset;
+    -webkit-text-fill-color: #111827;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* --- Gemini-style Better Scrollbars --- */
+  ::-webkit-scrollbar {
+    width: 8px; /* Slightly thinner for Gemini look */
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 12px 0; /* Creates the "Floating Scrollbar" effect - prevents overflow at rounded corners */
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border: 2px solid transparent; /* Essential for floating effect */
+    background-clip: content-box; /* Shrinks the thumb visually */
+    border-radius: 20px;
+    transition: all 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+    border: 1px solid transparent; /* Grows thumb slightly on hover */
+    background-clip: content-box;
+  }
+
+  /* Firefox Support */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Specific class for custom scrollbar if needed */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
