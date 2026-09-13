@@ -17,7 +17,7 @@ import {
   Laptop
 } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -47,6 +47,8 @@ export const TutorDetailDialog = ({ tutors, tutorId, open, onOpenChange }: Tutor
   const approveConfirm = useToggle(false);
   const rejectDialog = useToggle(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [rejectError, setRejectError] = useState("");
+  const rejectReasonRef = useRef<HTMLTextAreaElement>(null);
 
   const handleApprove = () => {
     if (!tutorId) return;
@@ -64,19 +66,45 @@ export const TutorDetailDialog = ({ tutors, tutorId, open, onOpenChange }: Tutor
   };
 
   const handleReject = () => {
-    if (!tutorId || !rejectReason.trim()) return toast.error("Vui lòng nhập lý do từ chối");
+    if (!tutorId) return;
+    const normalizedReason = rejectReason.trim();
+    if (!normalizedReason) {
+      setRejectError("Vui lòng nhập lý do từ chối");
+      rejectReasonRef.current?.focus();
+      return;
+    }
+    setRejectError("");
     const toastId = toast.loading("Đang tiến hành từ chối hồ sơ...");
-    rejectMutation.mutate({ id: tutorId.toString(), reason: rejectReason }, {
+    rejectMutation.mutate({ id: tutorId.toString(), reason: normalizedReason }, {
       onSuccess: () => {
         toast.success("Đã từ chối hồ sơ thành công!", { id: toastId });
-        rejectDialog.close();
+        handleCloseRejectDialog();
         onOpenChange(false);
-        setRejectReason("");
       },
       onError: (err: any) => {
         toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi từ chối hồ sơ"), { id: toastId });
       }
     });
+  };
+
+  const handleOpenRejectDialog = () => {
+    setRejectReason("");
+    setRejectError("");
+    rejectDialog.open();
+  };
+
+  const handleCloseRejectDialog = () => {
+    rejectDialog.close();
+    setRejectReason("");
+    setRejectError("");
+  };
+
+  const handleRejectDialogOpenChange = (open: boolean) => {
+    rejectDialog.setValue(open);
+    if (!open) {
+      setRejectReason("");
+      setRejectError("");
+    }
   };
 
   return (
@@ -188,7 +216,7 @@ export const TutorDetailDialog = ({ tutors, tutorId, open, onOpenChange }: Tutor
             </Button>
             <div className="flex gap-3 ml-auto">
               <Button 
-                onClick={rejectDialog.open}
+                onClick={handleOpenRejectDialog}
                 variant="ghost"
                 disabled={rejectMutation.isPending || approveMutation.isPending || !tutor}
                 className="rounded-2xl bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all font-black px-6"
@@ -210,7 +238,7 @@ export const TutorDetailDialog = ({ tutors, tutorId, open, onOpenChange }: Tutor
       </Dialog>
 
       {/* Rejection Child Dialog */}
-      <Dialog open={rejectDialog.value} onOpenChange={rejectDialog.setValue}>
+      <Dialog open={rejectDialog.value} onOpenChange={handleRejectDialogOpenChange}>
         <DialogContent className="sm:max-w-md bg-white rounded-4xl border-none shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-rose-600 text-xl font-black">
@@ -223,17 +251,30 @@ export const TutorDetailDialog = ({ tutors, tutorId, open, onOpenChange }: Tutor
           </DialogHeader>
           <div className="py-2">
             <Textarea
+              ref={rejectReasonRef}
+              id="detail-reject-reason"
+              required
+              aria-invalid={Boolean(rejectError)}
+              aria-describedby={rejectError ? "detail-reject-reason-error" : undefined}
               placeholder="Vd: Ảnh chứng chỉ mờ, không thể đọc được nội dung..."
               className="min-h-30 rounded-2xl border-muted focus-visible:ring-rose-500 font-medium p-4 text-sm"
               value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
+              onChange={(e) => {
+                setRejectReason(e.target.value);
+                if (rejectError) setRejectError("");
+              }}
             />
+            {rejectError && (
+              <p id="detail-reject-reason-error" role="alert" className="mt-2 text-xs font-medium text-rose-600">
+                {rejectError}
+              </p>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
               className="rounded-xl font-bold"
-              onClick={rejectDialog.close}
+              onClick={handleCloseRejectDialog}
             >
               HỦY
             </Button>

@@ -22,10 +22,66 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { ROUTES } from "@/shared/constants/app";
 import { cn, formatErrorMessage } from "@/shared/lib/utils";
+import { ApprovalStatus } from "@/server/_types/tutor-type";
+
+const profileStatusConfig: Record<
+  ApprovalStatus,
+  {
+    cardClassName: string;
+    iconClassName: string;
+    titleClassName: string;
+    subtitleClassName: string;
+    descriptionClassName: string;
+    title: string;
+    subtitle: string;
+    description: string;
+    usesRejectionReason?: boolean;
+  }
+> = {
+  APPROVED: {
+    cardClassName: "bg-emerald-500/5 border-emerald-500/10",
+    iconClassName: "bg-emerald-500/20 text-emerald-600",
+    titleClassName: "text-emerald-700",
+    subtitleClassName: "text-emerald-600",
+    descriptionClassName: "text-emerald-800/70",
+    title: "Đối tác đã xác thực",
+    subtitle: "Cấp độ: Chuyên gia",
+    description:
+      "Chúc mừng! Hồ sơ của bạn đã vượt qua các bước đối soát chuyên môn và sẵn sàng tiếp nhận lớp.",
+  },
+  PENDING: {
+    cardClassName: "bg-amber-500/5 border-amber-500/10",
+    iconClassName: "bg-amber-500/20 text-amber-600",
+    titleClassName: "text-amber-700",
+    subtitleClassName: "text-amber-600",
+    descriptionClassName: "text-amber-800/70",
+    title: "Hồ sơ đang xét duyệt",
+    subtitle: "Đang thẩm định thông tin",
+    description:
+      "Quản trị viên đang thẩm định thông tin và bằng cấp của bạn. Vui lòng kiên nhẫn đợi trong 24h làm việc.",
+  },
+  REJECTED: {
+    cardClassName: "bg-rose-500/5 border-rose-500/10",
+    iconClassName: "bg-rose-500/20 text-rose-600",
+    titleClassName: "text-rose-700",
+    subtitleClassName: "text-rose-600",
+    descriptionClassName: "text-rose-800/70",
+    title: "Cần cập nhật hồ sơ",
+    subtitle: "Vui lòng chỉnh sửa lại",
+    description:
+      "Một số thông tin chưa đạt yêu cầu. Đừng lo lắng, hãy điều chỉnh theo hướng dẫn của Admin để được duyệt lại.",
+    usesRejectionReason: true,
+  },
+};
 
 export default function TutorProfilePage() {
   const { data: user, isLoading: isUserLoading } = useGetMe();
-  const { data: tutorProfile, isLoading: isTutorLoading } = useGetTutorProfile();
+  const {
+    data: tutorProfile,
+    isLoading: isTutorLoading,
+    isError: isTutorError,
+    refetch: refetchTutorProfile,
+  } = useGetTutorProfile();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUpdateAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -208,58 +264,30 @@ export default function TutorProfilePage() {
           </div>
 
           {/* Account Integrity */}
-          <div className={cn(
-            "rounded-4xl border p-6 transition-all duration-500",
-            tutorProfile?.approvalStatus === "APPROVED" ? "bg-emerald-500/5 border-emerald-500/10" :
-            tutorProfile?.approvalStatus === "PENDING" ? "bg-amber-500/5 border-amber-500/10" :
-            "bg-rose-500/5 border-rose-500/10"
-          )}>
+          {!isTutorError && tutorProfile && (() => {
+            const status = profileStatusConfig[tutorProfile.approvalStatus];
+            const description = status.usesRejectionReason
+              ? tutorProfile.rejectionReason ?? status.description
+              : status.description;
+
+            return (
+          <div className={cn("rounded-4xl border p-6 transition-all duration-500", status.cardClassName)}>
              <div className="flex items-center gap-3 mb-4">
-                <div className={cn(
-                  "h-10 w-10 flex items-center justify-center rounded-xl",
-                  tutorProfile?.approvalStatus === "APPROVED" ? "bg-emerald-500/20 text-emerald-600" :
-                  tutorProfile?.approvalStatus === "PENDING" ? "bg-amber-500/20 text-amber-600" :
-                  "bg-rose-500/20 text-rose-600"
-                )}>
+                <div className={cn("h-10 w-10 flex items-center justify-center rounded-xl", status.iconClassName)}>
                    <ShieldCheck size={20} strokeWidth={2.5} />
                 </div>
                 <div>
-                   <h3 className={cn(
-                     "text-xs font-black uppercase tracking-widest",
-                     tutorProfile?.approvalStatus === "APPROVED" ? "text-emerald-700" :
-                     tutorProfile?.approvalStatus === "PENDING" ? "text-amber-700" :
-                     "text-rose-700"
-                   )}>
-                     {tutorProfile?.approvalStatus === "APPROVED" ? "Đối Tác Đã Xác Thực" :
-                      tutorProfile?.approvalStatus === "PENDING" ? "Hồ Sơ Đang Xét Duyệt" :
-                      "Cần Cập Nhật Hồ Sơ"}
-                   </h3>
-                   <span className={cn(
-                     "text-[10px] font-bold opacity-70",
-                     tutorProfile?.approvalStatus === "APPROVED" ? "text-emerald-600" :
-                     tutorProfile?.approvalStatus === "PENDING" ? "text-amber-600" :
-                     "text-rose-600"
-                   )}>
-                     {tutorProfile?.approvalStatus === "APPROVED" ? "Cấp độ: Chuyên gia" :
-                      tutorProfile?.approvalStatus === "PENDING" ? "Đang thẩm định thông tin" :
-                      "Vui lòng chỉnh sửa lại"}
-                   </span>
+                   <h3 className={cn("text-xs font-black uppercase tracking-widest", status.titleClassName)}>
+                      {status.title}
+                    </h3>
+                    <span className={cn("text-[10px] font-bold opacity-70", status.subtitleClassName)}>
+                      {status.subtitle}
+                    </span>
                 </div>
              </div>
-             <p className={cn(
-               "text-[11px] font-medium leading-relaxed mb-6",
-               tutorProfile?.approvalStatus === "APPROVED" ? "text-emerald-800/70" :
-               tutorProfile?.approvalStatus === "PENDING" ? "text-amber-800/70" :
-               "text-rose-800/70"
-             )}>
-               {tutorProfile?.approvalStatus === "APPROVED" ? (
-                 "Chúc mừng! Hồ sơ của bạn đã vượt qua các bước đối soát chuyên môn và sẵn sàng tiếp nhận lớp."
-               ) : tutorProfile?.approvalStatus === "PENDING" ? (
-                 "Quản trị viên đang thẩm định thông tin và bằng cấp của bạn. Vui lòng kiên nhẫn đợi trong 24h làm việc."
-               ) : (
-                 tutorProfile?.rejectionReason || "Một số thông tin chưa đạt yêu cầu. Đừng lo lắng, hãy điều chỉnh theo hướng dẫn của Admin để được duyệt lại."
-               )}
-             </p>
+             <p className={cn("text-[11px] font-medium leading-relaxed mb-6", status.descriptionClassName)}>
+                {description}
+              </p>
              
              <Link
                 href={ROUTES.CHANGE_PASSWORD}
@@ -267,8 +295,10 @@ export default function TutorProfilePage() {
              >
                 <Lock size={14} />
                 Đổi mật khẩu
-             </Link>
-          </div>
+              </Link>
+           </div>
+            );
+          })()}
         </div>
 
         {/* Right Column: Tutor Details */}
@@ -284,7 +314,12 @@ export default function TutorProfilePage() {
                  </div>
               </div>
               
-              <TutorProfileForm />
+               <TutorProfileForm
+                 profile={tutorProfile}
+                 isLoading={isTutorLoading}
+                 isError={isTutorError}
+                 onRetry={refetchTutorProfile}
+               />
            </div>
         </div>
       </div>

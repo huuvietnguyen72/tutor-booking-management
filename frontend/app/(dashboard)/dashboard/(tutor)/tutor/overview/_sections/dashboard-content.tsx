@@ -13,6 +13,30 @@ import { ProfileStatus } from "./profile-status";
 import { Sparkles, ShieldCheck, AlertCircle, Clock } from "lucide-react";
 import { useGetTutorProfile } from "@/server/_actions/tutor-action";
 import { cn } from "@/shared/lib/utils";
+import { ApprovalStatus } from "@/server/_types/tutor-type";
+
+const statusConfig: Record<
+  ApprovalStatus,
+  { className: string; label: string; Icon: typeof Sparkles; iconClassName?: string }
+> = {
+  APPROVED: {
+    className: "bg-emerald-500/10 border-emerald-500/20 text-emerald-600",
+    label: "Đối tác đã xác thực",
+    Icon: Sparkles,
+    iconClassName: "animate-pulse",
+  },
+  PENDING: {
+    className: "bg-amber-500/10 border-amber-500/20 text-amber-600",
+    label: "Hồ sơ đang xét duyệt",
+    Icon: Clock,
+    iconClassName: "animate-spin-slow",
+  },
+  REJECTED: {
+    className: "bg-rose-500/10 border-rose-500/20 text-rose-600",
+    label: "Cần cập nhật hồ sơ",
+    Icon: AlertCircle,
+  },
+};
 
 export function TutorDashboardContent() {
   const [isMounted, setIsMounted] = useState(false);
@@ -20,7 +44,12 @@ export function TutorDashboardContent() {
   const { data: user, isLoading: isUserLoading } = useGetMe({
     enabled: !!token && isMounted,
   });
-  const { data: tutorProfile, isLoading: isProfileLoading } =
+  const {
+    data: tutorProfile,
+    isLoading: isProfileLoading,
+    isError: isProfileError,
+    refetch: refetchTutorProfile,
+  } =
     useGetTutorProfile();
   const { data: sessionsResponse } = useGetMySessions({ size: 100 });
 
@@ -78,35 +107,22 @@ export function TutorDashboardContent() {
           </div>
 
           {/* Status Badge */}
-          {!isLoading && tutorProfile && (
-            <div
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all duration-500",
-                tutorProfile.approvalStatus === "APPROVED"
-                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
-                  : tutorProfile.approvalStatus === "PENDING"
-                    ? "bg-amber-500/10 border-amber-500/20 text-amber-600"
-                    : "bg-rose-500/10 border-rose-500/20 text-rose-600",
-              )}
-            >
-              {tutorProfile.approvalStatus === "APPROVED" ? (
-                <>
-                  <Sparkles size={14} className="animate-pulse" />
-                  Đối tác đã xác thực
-                </>
-              ) : tutorProfile.approvalStatus === "PENDING" ? (
-                <>
-                  <Clock size={14} className="animate-spin-slow" />
-                  Hồ sơ đang xét duyệt
-                </>
-              ) : (
-                <>
-                  <AlertCircle size={14} />
-                  Cần cập nhật hồ sơ
-                </>
-              )}
-            </div>
-          )}
+          {!isLoading && !isProfileError && tutorProfile && (() => {
+            const status = statusConfig[tutorProfile.approvalStatus];
+            const Icon = status.Icon;
+
+            return (
+              <div
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all duration-500",
+                  status.className,
+                )}
+              >
+                <Icon size={14} className={status.iconClassName} />
+                {status.label}
+              </div>
+            );
+          })()}
         </div>
 
         <SummaryCards />
@@ -116,7 +132,12 @@ export function TutorDashboardContent() {
           <UpcomingLessons />
 
           <div className="xl:col-span-2 space-y-6">
-            <ProfileStatus tutorProfile={tutorProfile} isLoading={isLoading} />
+            <ProfileStatus
+              tutorProfile={tutorProfile}
+              isLoading={isLoading}
+              isError={isProfileError}
+              onRetry={refetchTutorProfile}
+            />
             {/* Potential Jobs preview could go here */}
           </div>
         </div>

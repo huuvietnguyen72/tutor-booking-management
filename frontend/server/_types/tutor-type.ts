@@ -15,7 +15,7 @@ export interface ITutorDetail {
   teachingMode: TeachingMode;
   teachingArea?: string;
   approvalStatus: ApprovalStatus;
-  rejectionReason?: string;
+  rejectionReason: string | null;
   rating: number;
   totalReviews: number;
   isAvailable: boolean;
@@ -41,10 +41,10 @@ export interface ITutorAvailability {
 }
 
 export interface IUpdateTutorRequest {
-  educationLevel: string;
+  educationLevel: TutorEducationLevel;
   experience: string;
   qualifications: string;
-  teachingMode: string;
+  teachingMode: TeachingMode;
   teachingArea: string;
 }
 

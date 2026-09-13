@@ -3,7 +3,6 @@ import { axiosInstance, axiosInstanceNoAuth } from "../http-client";
 import { TUTOR_PATH } from "../_paths/tutor-path";
 import { ApiResponse, IPageResponse } from "../_types/base";
 import {
-  ITutorDetail,
   ITutorSubject,
   ITutorAvailability,
   IUpdateTutorRequest,
@@ -12,6 +11,7 @@ import {
   ISubject,
 } from "../_types/tutor-type";
 import { ITutorReviewSummary } from "../_types/review-type";
+import { normalizeTutorDetail, TutorDetailWire } from "../_normalizers/tutor-normalizer";
 
 // --- Hooks ---
 
@@ -33,10 +33,10 @@ export const useGetTutorProfile = (enabled = true) => {
   return useQuery({
     queryKey: ["tutor-profile"],
     queryFn: async () => {
-      const res = await axiosInstance.get<ApiResponse<ITutorDetail>>(
+      const res = await axiosInstance.get<ApiResponse<TutorDetailWire>>(
         TUTOR_PATH.GET_MY_PROFILE,
       );
-      return res.data; // Trả về ITutorDetail trực tiếp
+      return normalizeTutorDetail(res.data);
     },
     enabled,
   });
@@ -207,11 +207,14 @@ export const useSearchTutors = (params: any) => {
     queryKey: ["search-tutors", params],
     queryFn: async () => {
       const res = await axiosInstanceNoAuth.get<
-        ApiResponse<IPageResponse<ITutorDetail>>
+        ApiResponse<IPageResponse<TutorDetailWire>>
       >(TUTOR_PATH.SEARCH, {
         params,
       });
-      return res.data;
+      return {
+        ...res.data,
+        content: res.data.content.map(normalizeTutorDetail),
+      };
     },
   });
 };
@@ -221,10 +224,10 @@ export const useGetTutorDetail = (id: string | number, enabled = true) => {
   return useQuery({
     queryKey: ["tutor-detail", id],
     queryFn: async () => {
-      const res = await axiosInstanceNoAuth.get<ApiResponse<ITutorDetail>>(
+      const res = await axiosInstanceNoAuth.get<ApiResponse<TutorDetailWire>>(
         TUTOR_PATH.GET_DETAIL(id),
       );
-      return res.data;
+      return normalizeTutorDetail(res.data);
     },
     enabled: !!id && enabled,
   });

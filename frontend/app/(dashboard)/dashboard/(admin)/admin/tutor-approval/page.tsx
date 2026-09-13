@@ -8,7 +8,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { ShieldCheck, Eye, CheckCircle, XCircle, Search, ShieldAlert } from "lucide-react";
 import Image from "next/image";
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useRef } from "react";
 import { TutorDetailDialog } from "./_sections/TutorDetailDialog";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/shared/components/ui/confirm-dialog";
@@ -100,6 +100,8 @@ const TutorApprovalPage = () => {
   const [isApproveConfirmOpen, setIsApproveConfirmOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [rejectError, setRejectError] = useState("");
+  const rejectReasonRef = useRef<HTMLTextAreaElement>(null);
 
   const handleOpenDetail = useCallback((id: number) => {
     setSelectedTutorId(id);
@@ -115,6 +117,7 @@ const TutorApprovalPage = () => {
     setActionTutorId(id);
     setIsRejectDialogOpen(true);
     setRejectReason("");
+    setRejectError("");
   }, []);
 
   const handleDirectApprove = useCallback(() => {
@@ -133,9 +136,16 @@ const TutorApprovalPage = () => {
   }, [actionTutorId, approveMutation]);
 
   const handleDirectReject = useCallback(() => {
-    if (!actionTutorId || !rejectReason.trim()) return toast.error("Vui lòng nhập lý do từ chối");
+    if (!actionTutorId) return;
+    const normalizedReason = rejectReason.trim();
+    if (!normalizedReason) {
+      setRejectError("Vui lòng nhập lý do từ chối");
+      rejectReasonRef.current?.focus();
+      return;
+    }
+    setRejectError("");
     const toastId = toast.loading("Đang tiến hành từ chối hồ sơ...");
-    rejectMutation.mutate({ id: actionTutorId.toString(), reason: rejectReason }, {
+    rejectMutation.mutate({ id: actionTutorId.toString(), reason: normalizedReason }, {
       onSuccess: () => {
         toast.success("Đã từ chối hồ sơ thành công!", { id: toastId });
         setIsRejectDialogOpen(false);
@@ -147,6 +157,14 @@ const TutorApprovalPage = () => {
       }
     });
   }, [actionTutorId, rejectReason, rejectMutation]);
+
+  const handleRejectDialogOpenChange = useCallback((open: boolean) => {
+    setIsRejectDialogOpen(open);
+    if (!open) {
+      setRejectReason("");
+      setRejectError("");
+    }
+  }, []);
 
   const isLoading2 = approveMutation.isPending || rejectMutation.isPending;
 
@@ -242,7 +260,7 @@ const TutorApprovalPage = () => {
       />
 
       {/* Quick Rejection Dialog */}
-      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+      <Dialog open={isRejectDialogOpen} onOpenChange={handleRejectDialogOpenChange}>
         <DialogContent className="sm:max-w-md bg-white rounded-4xl border-none shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-rose-600 text-xl font-black">
@@ -255,17 +273,30 @@ const TutorApprovalPage = () => {
           </DialogHeader>
           <div className="py-2">
             <Textarea
+              ref={rejectReasonRef}
+              id="quick-reject-reason"
+              required
+              aria-invalid={Boolean(rejectError)}
+              aria-describedby={rejectError ? "quick-reject-reason-error" : undefined}
               placeholder="Vd: Ảnh chứng chỉ mờ, không thể đọc được nội dung..."
               className="min-h-30 rounded-2xl border-muted focus-visible:ring-rose-500 font-medium p-4 text-sm"
               value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
+              onChange={(e) => {
+                setRejectReason(e.target.value);
+                if (rejectError) setRejectError("");
+              }}
             />
+            {rejectError && (
+              <p id="quick-reject-reason-error" role="alert" className="mt-2 text-xs font-medium text-rose-600">
+                {rejectError}
+              </p>
+            )}
           </div>
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
               className="rounded-xl font-bold"
-              onClick={() => setIsRejectDialogOpen(false)}
+              onClick={() => handleRejectDialogOpenChange(false)}
             >
               HỦY
             </Button>

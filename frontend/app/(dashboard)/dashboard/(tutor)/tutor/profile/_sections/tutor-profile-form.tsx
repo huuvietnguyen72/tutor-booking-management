@@ -21,16 +21,29 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Separator } from "@/shared/components/ui/separator";
+import { useUpdateTutorProfile } from "@/server/_actions/tutor-action";
 import {
-  useGetTutorProfile,
-  useUpdateTutorProfile,
-} from "@/server/_actions/tutor-action";
-import { IUpdateTutorRequest } from "@/server/_types/tutor-type";
+  IUpdateTutorRequest,
+  ITutorDetail,
+  TeachingMode,
+  TutorEducationLevel,
+} from "@/server/_types/tutor-type";
 import { toast } from "sonner";
 import { formatErrorMessage } from "@/shared/lib/utils";
 
-export function TutorProfileForm() {
-  const { data: profile, isLoading } = useGetTutorProfile();
+interface TutorProfileFormProps {
+  profile?: ITutorDetail;
+  isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
+}
+
+export function TutorProfileForm({
+  profile,
+  isLoading,
+  isError,
+  onRetry,
+}: TutorProfileFormProps) {
   const { mutate: updateProfile, isPending: isUpdating } =
     useUpdateTutorProfile();
 
@@ -77,13 +90,16 @@ export function TutorProfileForm() {
   }, [formData, updateProfile]);
 
   const handleEducationLevelChange = useCallback((val: string) => {
-    setFormData(prev => ({ ...prev, educationLevel: val }));
+    setFormData(prev => ({
+      ...prev,
+      educationLevel: val as TutorEducationLevel,
+    }));
   }, []);
 
   const handleTeachingModeChange = useCallback((val: string) => {
     setFormData(prev => ({
       ...prev,
-      teachingMode: val,
+      teachingMode: val as TeachingMode,
       teachingArea: val === "ONLINE" ? "" : prev.teachingArea,
     }));
   }, []);
@@ -109,6 +125,24 @@ export function TutorProfileForm() {
             className="h-24 w-full animate-pulse rounded-2xl bg-muted"
           />
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div
+        role="alert"
+        className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 text-center"
+      >
+        <p className="text-sm font-black text-rose-700">Không thể tải trạng thái hồ sơ</p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-4 rounded-xl bg-rose-500 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-rose-600"
+        >
+          Thử lại
+        </button>
       </div>
     );
   }
@@ -214,11 +248,15 @@ export function TutorProfileForm() {
 
         {/* Qualifications */}
         <div className="space-y-3">
-          <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
+          <label
+            htmlFor="tutor-qualifications"
+            className="text-[11px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2"
+          >
             <BookOpen size={14} className="text-primary" />
             Bằng cấp & Chứng chỉ
           </label>
           <textarea
+            id="tutor-qualifications"
             value={formData.qualifications}
             onChange={handleQualificationsChange}
             rows={5}
