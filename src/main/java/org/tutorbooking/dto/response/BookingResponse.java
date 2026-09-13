@@ -21,6 +21,7 @@ public class BookingResponse {
     private String tutorName;
     private String tutorAvatar;
     private Long subjectId;
+    private String subjectName;
     private Long studentId;
     private String studentName;
     private Byte gradeLevel;
