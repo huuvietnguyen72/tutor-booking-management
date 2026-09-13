@@ -39,3 +39,5 @@ CHANGELOG.md
 
 ### Root npm orchestration ###
 /node_modules/
+
+/.worktrees/
