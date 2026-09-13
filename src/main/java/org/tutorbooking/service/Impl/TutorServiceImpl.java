@@ -14,10 +14,16 @@ import org.tutorbooking.dto.request.UpdateTutorRequest;
 import org.tutorbooking.dto.response.ReviewResponse;
 import org.tutorbooking.dto.response.TutorDetailResponse;
 import org.tutorbooking.dto.response.TutorReviewSummaryResponse;
+import org.tutorbooking.domain.enums.EducationLevel;
+import org.tutorbooking.domain.enums.TeachingMode;
+import org.tutorbooking.domain.enums.TutorApprovalStatus;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.tutorbooking.repository.ReviewRepository;
+
+import java.util.Locale;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -51,22 +57,27 @@ public class TutorServiceImpl implements TutorService {
         Tutor tutor = tutorRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ gia sư để cập nhật."));
 
-        boolean needsReapproval = false;
-        if (!req.getEducationLevel().equals(tutor.getEducationLevel()) || 
-            !req.getQualifications().equals(tutor.getQualifications())) {
-            needsReapproval = true;
-        }
+        boolean educationChanged = req.getEducationLevel() != educationLevel(tutor.getEducationLevel());
+        boolean experienceChanged = !Objects.equals(req.getExperience(), tutor.getExperience());
+        boolean qualificationsChanged = !Objects.equals(req.getQualifications(), tutor.getQualifications());
+        boolean teachingModeChanged = req.getTeachingMode() != teachingMode(tutor.getTeachingMode());
+        boolean teachingAreaChanged = !Objects.equals(req.getTeachingArea(), tutor.getTeachingArea());
+        boolean anyChange = educationChanged || experienceChanged || qualificationsChanged
+                || teachingModeChanged || teachingAreaChanged;
+        boolean credentialChange = educationChanged || experienceChanged || qualificationsChanged;
+        TutorApprovalStatus currentStatus = approvalStatus(tutor.getApprovalStatus());
 
-        tutor.setEducationLevel(req.getEducationLevel());
-        tutor.setExperience(req.getExperience());
-        tutor.setQualifications(req.getQualifications());
-        tutor.setTeachingMode(req.getTeachingMode());
-        tutor.setTeachingArea(req.getTeachingArea());
-
-        if (needsReapproval) {
+        if ((currentStatus == TutorApprovalStatus.REJECTED && anyChange)
+                || (currentStatus == TutorApprovalStatus.APPROVED && credentialChange)) {
             tutor.setApprovalStatus("pending");
             tutor.setRejectionReason(null);
         }
+
+        tutor.setEducationLevel(persistenceValue(req.getEducationLevel()));
+        tutor.setExperience(req.getExperience());
+        tutor.setQualifications(req.getQualifications());
+        tutor.setTeachingMode(persistenceValue(req.getTeachingMode()));
+        tutor.setTeachingArea(req.getTeachingArea());
     }
 
     @Override
@@ -127,12 +138,13 @@ public class TutorServiceImpl implements TutorService {
             res.setEmail(tutor.getUser().getEmail());
         }
 
-        res.setEducationLevel(tutor.getEducationLevel());
+        res.setEducationLevel(educationLevel(tutor.getEducationLevel()));
         res.setExperience(tutor.getExperience());
         res.setQualifications(tutor.getQualifications());
-        res.setTeachingMode(tutor.getTeachingMode());
+        res.setTeachingMode(teachingMode(tutor.getTeachingMode()));
         res.setTeachingArea(tutor.getTeachingArea());
-        res.setApprovalStatus(tutor.getApprovalStatus());
+        res.setApprovalStatus(approvalStatus(tutor.getApprovalStatus()));
+        res.setRejectionReason(tutor.getRejectionReason());
 
         return res;
     }
@@ -143,20 +155,7 @@ public class TutorServiceImpl implements TutorService {
         PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
         Page<Tutor> tutors = tutorRepository.findPendingTutors(pageable);
 
-        return tutors.map(tutor -> {
-            TutorDetailResponse dto = new TutorDetailResponse();
-            dto.setId(tutor.getId());
-            dto.setFullName(tutor.getUser().getFullName());
-            dto.setAvatarUrl(tutor.getUser().getAvatarUrl());
-            dto.setEmail(tutor.getUser().getEmail());
-            dto.setEducationLevel(tutor.getEducationLevel());
-            dto.setExperience(tutor.getExperience());
-            dto.setQualifications(tutor.getQualifications());
-            dto.setTeachingMode(tutor.getTeachingMode());
-            dto.setTeachingArea(tutor.getTeachingArea());
-            dto.setApprovalStatus(tutor.getApprovalStatus());
-            return dto;
-        });
+        return tutors.map(this::mapToTutorDetailResponse);
     }
 
     @Override
@@ -191,5 +190,21 @@ public class TutorServiceImpl implements TutorService {
     public Page<TopTutorResponse> getTopTutors(int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
         return tutorRepository.findTopTutors(pageable);
+    }
+
+    private EducationLevel educationLevel(String value) {
+        return EducationLevel.valueOf(value.toUpperCase(Locale.ROOT));
+    }
+
+    private TeachingMode teachingMode(String value) {
+        return TeachingMode.valueOf(value.toUpperCase(Locale.ROOT));
+    }
+
+    private TutorApprovalStatus approvalStatus(String value) {
+        return TutorApprovalStatus.valueOf(value.toUpperCase(Locale.ROOT));
+    }
+
+    private String persistenceValue(Enum<?> value) {
+        return value.name().toLowerCase(Locale.ROOT);
     }
 }

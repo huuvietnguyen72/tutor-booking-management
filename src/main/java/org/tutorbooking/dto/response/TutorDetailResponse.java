@@ -1,6 +1,9 @@
 package org.tutorbooking.dto.response;
 
 import lombok.Data;
+import org.tutorbooking.domain.enums.EducationLevel;
+import org.tutorbooking.domain.enums.TeachingMode;
+import org.tutorbooking.domain.enums.TutorApprovalStatus;
 
 @Data
 public class TutorDetailResponse {
@@ -13,12 +16,12 @@ public class TutorDetailResponse {
     private String email;
 
     // thông tin tutor
-    private String educationLevel;
+    private EducationLevel educationLevel;
     private String experience;
     private String qualifications;
-    private String teachingMode;
+    private TeachingMode teachingMode;
     private String teachingArea;
-    private String approvalStatus;
+    private TutorApprovalStatus approvalStatus;
 
     private String rejectionReason;
 }
