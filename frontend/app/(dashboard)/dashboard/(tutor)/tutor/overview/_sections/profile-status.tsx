@@ -93,18 +93,6 @@ interface ProfileStatusProps {
 }
 
 export function ProfileStatus({ tutorProfile, isLoading, isError, onRetry }: ProfileStatusProps) {
-  if (isLoading) {
-    return (
-      <section className="space-y-6">
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
-          <h2 className="text-lg font-black text-foreground tracking-tight">Trạng thái hồ sơ</h2>
-        </div>
-        <Skeleton className="h-[300px] w-full rounded-[2.5rem]" />
-      </section>
-    );
-  }
-
   if (isError) {
     return (
       <section className="space-y-6">
@@ -124,6 +112,18 @@ export function ProfileStatus({ tutorProfile, isLoading, isError, onRetry }: Pro
             </button>
           )}
         </div>
+      </section>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <section className="space-y-6">
+        <div className="flex items-center gap-3 px-2">
+          <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+          <h2 className="text-lg font-black text-foreground tracking-tight">Trạng thái hồ sơ</h2>
+        </div>
+        <Skeleton className="h-[300px] w-full rounded-[2.5rem]" />
       </section>
     );
   }

@@ -19,13 +19,55 @@ import { ROUTES } from "@/shared/constants/app";
 import { cn, formatErrorMessage } from "@/shared/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { ApprovalStatus } from "@/server/_types/tutor-type";
+
+const tutorStatusConfig: Record<
+  ApprovalStatus,
+  {
+    iconClassName: string;
+    titleClassName: string;
+    subtitleClassName: string;
+    title: string;
+    subtitle: string;
+  }
+> = {
+  APPROVED: {
+    iconClassName: "bg-emerald-500/10 text-emerald-500",
+    titleClassName: "text-emerald-700",
+    subtitleClassName: "text-emerald-600",
+    title: "Đối tác đã xác thực",
+    subtitle: "Cấp độ: Chuyên gia",
+  },
+  PENDING: {
+    iconClassName: "bg-amber-500/10 text-amber-500",
+    titleClassName: "text-amber-700",
+    subtitleClassName: "text-amber-600",
+    title: "Hồ sơ đang xét duyệt",
+    subtitle: "Đang thẩm định thông tin",
+  },
+  REJECTED: {
+    iconClassName: "bg-rose-500/10 text-rose-500",
+    titleClassName: "text-rose-700",
+    subtitleClassName: "text-rose-600",
+    title: "Cần cập nhật hồ sơ",
+    subtitle: "Vui lòng chỉnh sửa lại",
+  },
+};
 
 export default function ProfilePage() {
   const { data: user, isLoading: isUserLoading } = useGetMe();
-  const { data: tutorProfile } = useGetTutorProfile(user?.role === "TUTOR");
+  const {
+    data: tutorProfile,
+    isError: isTutorProfileError,
+    refetch: refetchTutorProfile,
+  } = useGetTutorProfile(user?.role === "TUTOR");
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUpdateAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tutorStatus = tutorProfile
+    ? tutorStatusConfig[tutorProfile.approvalStatus]
+    : undefined;
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -209,14 +251,42 @@ export default function ProfilePage() {
 
             {/* Right Column: Account Status & Actions */}
             <div className="flex flex-col justify-between">
+              {user?.role === "TUTOR" && isTutorProfileError ? (
+                <div
+                  role="alert"
+                  className="rounded-4xl bg-muted/30 p-6 border border-border shadow-inner"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 shadow-sm">
+                      <ShieldCheck size={20} />
+                    </div>
+                    <div className="flex flex-col">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-rose-700">
+                        Không thể tải trạng thái hồ sơ
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void refetchTutorProfile();
+                        }}
+                        className="mt-2 text-left text-[10px] font-black uppercase tracking-widest text-rose-600 hover:text-rose-700"
+                      >
+                        Thử lại
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : user?.role === "TUTOR" && !tutorStatus ? (
+                <div className="rounded-4xl bg-muted/30 p-6 border border-border shadow-inner">
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                </div>
+              ) : (
               <div className="rounded-4xl bg-muted/30 p-6 border border-border shadow-inner">
                 <div className="flex items-center gap-4 mb-4">
                   <div className={cn(
                     "flex h-10 w-10 items-center justify-center rounded-xl shadow-sm",
                     user?.role === "TUTOR" ? (
-                      tutorProfile?.approvalStatus === "APPROVED" ? "bg-emerald-500/10 text-emerald-500" :
-                      tutorProfile?.approvalStatus === "PENDING" ? "bg-amber-500/10 text-amber-500" :
-                      "bg-rose-500/10 text-rose-500"
+                      tutorStatus?.iconClassName
                     ) : (
                       user?.isActive ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
                     )
@@ -227,36 +297,29 @@ export default function ProfilePage() {
                     <h3 className={cn(
                       "text-xs font-black uppercase tracking-widest",
                       user?.role === "TUTOR" ? (
-                        tutorProfile?.approvalStatus === "APPROVED" ? "text-emerald-700" :
-                        tutorProfile?.approvalStatus === "PENDING" ? "text-amber-700" :
-                        "text-rose-700"
+                        tutorStatus?.titleClassName
                       ) : (
                         user?.isActive ? "text-emerald-700" : "text-amber-700"
                       )
                     )}>
                       {user?.role === "TUTOR" ? (
-                        tutorProfile?.approvalStatus === "APPROVED" ? "Đối Tác Đã Xác Thực" :
-                        tutorProfile?.approvalStatus === "PENDING" ? "Hồ Sơ Đang Xét Duyệt" :
-                        "Cần Cập Nhật Hồ Sơ"
+                        tutorStatus?.title
                       ) : (
                         user?.isActive ? "Tài Khoản Đã Xác Thực" : "Chờ Kích Hoạt Tài Khoản"
                       )}
                     </h3>
                     {user?.role === "TUTOR" && (
                       <span className={cn(
-                        "text-[10px] font-bold opacity-70",
-                        tutorProfile?.approvalStatus === "APPROVED" ? "text-emerald-600" :
-                        tutorProfile?.approvalStatus === "PENDING" ? "text-amber-600" :
-                        "text-rose-600"
+                          "text-[10px] font-bold opacity-70",
+                        tutorStatus?.subtitleClassName
                       )}>
-                        {tutorProfile?.approvalStatus === "APPROVED" ? "Cấp độ: Chuyên gia" :
-                         tutorProfile?.approvalStatus === "PENDING" ? "Đang thẩm định thông tin" :
-                         "Vui lòng chỉnh sửa lại"}
+                        {tutorStatus?.subtitle}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
+              )}
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <Link

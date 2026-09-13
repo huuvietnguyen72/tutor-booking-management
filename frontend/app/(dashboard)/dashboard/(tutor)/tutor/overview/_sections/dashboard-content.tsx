@@ -58,8 +58,6 @@ export function TutorDashboardContent() {
     (s) => s.sessionDate === todayStr && (s.status === "PENDING" || s.status === "CONFIRMED")
   ).length || 0;
 
-  const isLoading = isUserLoading || isProfileLoading;
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -81,7 +79,7 @@ export function TutorDashboardContent() {
         {/* Greeting */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            {isLoading ? (
+            {isUserLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-8 w-64 bg-muted" />
                 <Skeleton className="h-4 w-80 bg-muted" />
@@ -107,7 +105,7 @@ export function TutorDashboardContent() {
           </div>
 
           {/* Status Badge */}
-          {!isLoading && !isProfileError && tutorProfile && (() => {
+          {!isProfileLoading && !isProfileError && tutorProfile && (() => {
             const status = statusConfig[tutorProfile.approvalStatus];
             const Icon = status.Icon;
 
@@ -134,7 +132,7 @@ export function TutorDashboardContent() {
           <div className="xl:col-span-2 space-y-6">
             <ProfileStatus
               tutorProfile={tutorProfile}
-              isLoading={isLoading}
+              isLoading={isProfileLoading}
               isError={isProfileError}
               onRetry={refetchTutorProfile}
             />
