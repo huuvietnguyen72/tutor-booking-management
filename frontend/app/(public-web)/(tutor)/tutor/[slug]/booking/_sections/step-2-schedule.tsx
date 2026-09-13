@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { cn, formatToYYYYMMDD } from "@/shared/lib/utils";
+import { useCallback, useEffect, useMemo } from "react";
+import { formatToYYYYMMDD } from "@/shared/lib/utils";
+import { getIsoWeekday } from "@/shared/lib/booking-schedule";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { ArrowLeft, Clock, CalendarIcon, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Loader2 } from "lucide-react";
 import { useGetTutorAvailability } from "@/server/_actions/tutor-action";
 
 import { Slot } from "../page";
@@ -18,11 +19,13 @@ interface Step2Props {
   bookingType: "one-time" | "long-term";
   onBookingTypeChange: (type: "one-time" | "long-term") => void;
   selectedSlots: Slot[];
+  onSelectedSlotsChange: (slots: Slot[]) => void;
   onSlotToggle: (slot: Slot) => void;
   startDate: string;
   onStartDateChange: (date: string) => void;
   endDate: string;
   onEndDateChange: (date: string) => void;
+  scheduleError?: string;
   onBack: () => void;
   onNext: () => void;
 }
@@ -32,16 +35,19 @@ export function Step2Schedule({
   bookingType,
   onBookingTypeChange,
   selectedSlots,
+  onSelectedSlotsChange,
   onSlotToggle,
   startDate,
   onStartDateChange,
   endDate,
   onEndDateChange,
+  scheduleError,
   onBack,
   onNext,
 }: Step2Props) {
   const { data: availabilityResponse, isLoading } = useGetTutorAvailability(tutorId);
   const availability = availabilityResponse || [];
+  const selectedIsoDay = startDate ? getIsoWeekday(startDate) : null;
 
   // Map tutor availability to the format expected by the grid
   const availableSlots = useMemo(() => {
@@ -56,6 +62,13 @@ export function Step2Schedule({
     });
     return initial;
   }, [availability]);
+
+  const visibleAvailableSlots = useMemo(() => {
+    if (bookingType === "one-time" && selectedIsoDay) {
+      return { [selectedIsoDay]: availableSlots[selectedIsoDay] ?? [] };
+    }
+    return availableSlots;
+  }, [availableSlots, bookingType, selectedIsoDay]);
 
   // Map selectedSlots to the format expected by the grid
   const gridSelectedSlots = useMemo(() => {
@@ -75,7 +88,22 @@ export function Step2Schedule({
     });
   }, [onSlotToggle]);
 
-  const isValid = selectedSlots.length > 0;
+  useEffect(() => {
+    if (bookingType !== "one-time" || !selectedIsoDay) return;
+
+    const validSlots = selectedSlots.filter(
+      (slot) => slot.day === selectedIsoDay,
+    );
+    if (validSlots.length !== selectedSlots.length) {
+      onSelectedSlotsChange(validSlots);
+    }
+  }, [bookingType, onSelectedSlotsChange, selectedIsoDay, selectedSlots]);
+
+  const isScheduleValid =
+    selectedSlots.length > 0 &&
+    (bookingType !== "one-time" ||
+      selectedSlots.every((slot) => slot.day === selectedIsoDay));
+  const selectedDayLabel = DAYS.find((day) => day.value === selectedIsoDay)?.label;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -160,7 +188,7 @@ export function Step2Schedule({
           <div className="bg-card/50 dark:bg-muted/10 rounded-[2.5rem] border border-border overflow-hidden shadow-sm shadow-primary/5">
             <AvailabilityGrid 
               mode="select"
-              availableSlots={availableSlots}
+              availableSlots={visibleAvailableSlots}
               selectedSlots={gridSelectedSlots}
               onSlotToggle={handleGridToggle}
             />
@@ -176,6 +204,16 @@ export function Step2Schedule({
         </div>
         <div className="space-y-1">
           <p className="text-[13px] font-bold text-foreground">Lưu ý về lịch học</p>
+          {bookingType === "one-time" && selectedDayLabel && (
+            <p className="text-xs font-medium text-foreground">
+              Ngày bạn chọn là {selectedDayLabel}.
+            </p>
+          )}
+          {scheduleError && (
+            <p role="alert" className="text-xs font-medium text-destructive">
+              {scheduleError}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground leading-relaxed">
             Bạn có thể chọn các ô thời gian <span className="text-blue-600 dark:text-blue-400 font-bold">màu trắng/xanh</span> là lúc gia sư rảnh. Các ô <span className="font-bold">màu xám</span> là gia sư đã bận hoặc không làm việc.
           </p>
@@ -194,7 +232,7 @@ export function Step2Schedule({
         </Button>
         <Button
           onClick={onNext}
-          disabled={!isValid}
+          disabled={!isScheduleValid}
           className="flex-2 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:grayscale"
         >
           TIẾP TỤC

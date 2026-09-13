@@ -20,7 +20,8 @@ import {
 } from "@/server/_actions/tutor-action";
 import { useGetMyStudents } from "@/server/_actions/student-action";
 import { useCreateBooking } from "@/server/_actions/booking-action";
-import { formatErrorMessage } from "@/shared/lib/utils";
+import { formatErrorMessage, formatToYYYYMMDD } from "@/shared/lib/utils";
+import { getIsoWeekday } from "@/shared/lib/booking-schedule";
 
 export interface Slot {
   day: number;
@@ -66,13 +67,14 @@ export default function BookingPage() {
     "online",
   );
   const [startDate, setStartDate] = useState(
-    urlStartDate || new Date().toISOString().split("T")[0],
+    () => urlStartDate || formatToYYYYMMDD(new Date()),
   );
   const [endDate, setEndDate] = useState(
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [scheduleError, setScheduleError] = useState("");
 
   if (
     isUserLoading ||
@@ -129,6 +131,15 @@ export default function BookingPage() {
 
   const handleConfirm = async () => {
     if (!tutor || !childId || !subject) return;
+
+    if (
+      bookingType === "one-time" &&
+      selectedSlots.some((slot) => slot.day !== getIsoWeekday(startDate))
+    ) {
+      setScheduleError("Ngày học không khớp với lịch đã chọn");
+      setStep(2);
+      return;
+    }
 
     const selectedSubject = tutorSubjects.find(
       (s) => s.id.toString() === subject,
@@ -256,13 +267,24 @@ export default function BookingPage() {
                 <Step2Schedule
                   tutorId={Number(tutorId)}
                   bookingType={bookingType}
-                  onBookingTypeChange={setBookingType}
+                  onBookingTypeChange={(type) => {
+                    setScheduleError("");
+                    setBookingType(type);
+                  }}
                   selectedSlots={selectedSlots}
+                  onSelectedSlotsChange={(slots) => {
+                    setScheduleError("");
+                    setSelectedSlots(slots);
+                  }}
                   onSlotToggle={toggleSlot}
                   startDate={startDate}
-                  onStartDateChange={setStartDate}
+                  onStartDateChange={(date) => {
+                    setScheduleError("");
+                    setStartDate(date);
+                  }}
                   endDate={endDate}
                   onEndDateChange={setEndDate}
+                  scheduleError={scheduleError}
                   onBack={() => setStep(1)}
                   onNext={() => setStep(3)}
                 />
