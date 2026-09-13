@@ -3,13 +3,14 @@ import { axiosInstance } from "../http-client";
 import STUDENT_PATHS from "../_paths/student-path";
 import { IStudent } from "../_types/student-type";
 import { ApiResponse } from "../_types/base";
+import { normalizeStudent, StudentWire } from "../_normalizers/student-normalizer";
 
 export const useGetMyStudents = () => {
   return useQuery({
     queryKey: ["my-students"],
     queryFn: async () => {
-      const res = await axiosInstance.get<ApiResponse<IStudent[]>>(STUDENT_PATHS.GET_LIST);
-      return res.data;
+      const res = await axiosInstance.get<ApiResponse<StudentWire[]>>(STUDENT_PATHS.GET_LIST);
+      return res.data.map(normalizeStudent);
     },
   });
 };

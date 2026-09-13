@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.tutorbooking.domain.entity.Parent;
 import org.tutorbooking.domain.entity.Student;
+import org.tutorbooking.domain.enums.AcademicLevel;
 import org.tutorbooking.dto.request.StudentRequest;
 import org.tutorbooking.dto.response.StudentResponse;
 import org.tutorbooking.exception.ResourceNotFoundException;
@@ -14,6 +15,7 @@ import org.tutorbooking.repository.StudentRepository;
 import org.tutorbooking.service.StudentService;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,7 +48,7 @@ public class StudentServiceImpl implements StudentService {
         student.setFullName(request.getFullName());
         student.setGrade(request.getGrade());
         student.setSchool(request.getSchool());
-        student.setAcademicLevel(request.getAcademicLevel());
+        student.setAcademicLevel(toPersistenceAcademicLevel(request.getAcademicLevel()));
         student.setSpecialNotes(request.getSpecialNotes());
         
         Student savedStudent = studentRepository.save(student);
@@ -64,7 +66,7 @@ public class StudentServiceImpl implements StudentService {
         student.setFullName(request.getFullName());
         student.setGrade(request.getGrade());
         student.setSchool(request.getSchool());
-        student.setAcademicLevel(request.getAcademicLevel());
+        student.setAcademicLevel(toPersistenceAcademicLevel(request.getAcademicLevel()));
         student.setSpecialNotes(request.getSpecialNotes());
         
         Student updatedStudent = studentRepository.save(student);
@@ -92,9 +94,15 @@ public class StudentServiceImpl implements StudentService {
                 .fullName(student.getFullName())
                 .grade(student.getGrade())
                 .school(student.getSchool())
-                .academicLevel(student.getAcademicLevel())
+                .academicLevel(AcademicLevel.valueOf(student.getAcademicLevel().toUpperCase(Locale.ROOT)))
                 .specialNotes(student.getSpecialNotes())
                 .createdAt(student.getCreatedAt())
                 .build();
+    }
+
+    private String toPersistenceAcademicLevel(String academicLevel) {
+        return academicLevel == null || academicLevel.isBlank()
+                ? "average"
+                : academicLevel.toLowerCase(Locale.ROOT);
     }
 }

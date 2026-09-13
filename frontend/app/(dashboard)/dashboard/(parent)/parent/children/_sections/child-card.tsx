@@ -6,6 +6,7 @@ import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { IStudent } from "@/server/_types/student-type";
+import { normalizeAcademicLevel } from "@/server/_normalizers/student-normalizer";
 import { CHILD_STATUS_STYLES } from "@/shared/constants/child-styles";
 
 interface ChildCardProps {
@@ -15,8 +16,8 @@ interface ChildCardProps {
 }
 
 export function ChildCard({ child, onEdit, onDelete }: ChildCardProps) {
-  const academicLevel = child.academicLevel ?? "GOOD";
-  const styles = CHILD_STATUS_STYLES[academicLevel];
+  const academicLevel = normalizeAcademicLevel(child.academicLevel);
+  const styles = CHILD_STATUS_STYLES[academicLevel] ?? CHILD_STATUS_STYLES.AVERAGE;
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-4xl border border-border bg-card transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/30 sm:flex-row">

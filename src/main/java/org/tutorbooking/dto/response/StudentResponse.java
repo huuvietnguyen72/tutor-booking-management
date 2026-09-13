@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.tutorbooking.domain.enums.AcademicLevel;
 
 import java.time.LocalDateTime;
 
@@ -16,7 +17,7 @@ public class StudentResponse {
     private String fullName;
     private Byte grade;
     private String school;
-    private String academicLevel;
+    private AcademicLevel academicLevel;
     private String specialNotes;
     private LocalDateTime createdAt;
 }

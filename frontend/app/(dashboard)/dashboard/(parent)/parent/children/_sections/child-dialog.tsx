@@ -30,6 +30,7 @@ import { cn } from "@/shared/lib/utils";
 import { CHILD_STATUS_STYLES } from "@/shared/constants/child-styles";
 
 import { IStudent, AcademicLevel } from "@/server/_types/student-type";
+import { normalizeAcademicLevel } from "@/server/_normalizers/student-normalizer";
 
 const childSchema = z.object({
   fullName: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự"),
@@ -88,7 +89,7 @@ export function ChildDialog({ isOpen, onClose, onSubmit, initialData }: ChildDia
         fullName: initialData.fullName,
         grade: String(initialData.grade),
         school: initialData.school || "",
-        academicLevel: initialData.academicLevel || "GOOD",
+        academicLevel: normalizeAcademicLevel(initialData.academicLevel),
         specialNotes: initialData.specialNotes || "",
         avatarBgColor: "bg-blue-50",
       });
