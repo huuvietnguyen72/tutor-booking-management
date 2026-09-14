@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { MyApplications } from "./my-applications";
@@ -77,5 +77,24 @@ describe("MyApplications", () => {
 
     expect(screen.getByRole("button", { name: "Đang rút..." })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Quay lại" })).toBeDisabled();
+  });
+
+  test("keeps withdrawal confirmation open until the mutation succeeds", async () => {
+    const user = userEvent.setup();
+
+    render(<MyApplications />);
+
+    await user.click(screen.getByRole("button", { name: "Rút hồ sơ" }));
+    await user.click(screen.getByRole("button", { name: "Xác nhận rút" }));
+
+    expect(state.withdraw).toHaveBeenCalledWith(1, expect.any(Object));
+    expect(screen.getByRole("dialog", { name: "Xác nhận rút hồ sơ?" })).toBeInTheDocument();
+
+    const callbacks = state.withdraw.mock.calls[0][1] as { onSuccess: () => void };
+    await act(async () => {
+      callbacks.onSuccess();
+    });
+
+    expect(screen.queryByRole("dialog", { name: "Xác nhận rút hồ sơ?" })).not.toBeInTheDocument();
   });
 });

@@ -23,6 +23,7 @@ interface ConfirmDialogProps {
   variant?: "danger" | "primary";
   isPending?: boolean;
   pendingText?: string;
+  closeOnConfirm?: boolean;
 }
 
 export function ConfirmDialog({
@@ -36,6 +37,7 @@ export function ConfirmDialog({
   variant = "primary",
   isPending = false,
   pendingText = "Đang xử lý...",
+  closeOnConfirm = true,
 }: ConfirmDialogProps) {
   return (
     <Dialog
@@ -77,7 +79,10 @@ export function ConfirmDialog({
           </Button>
           <Button
             type="button"
-            onClick={onConfirm}
+            onClick={() => {
+              onConfirm();
+              if (closeOnConfirm) onClose();
+            }}
             disabled={isPending}
             className={cn(
               "flex-1 rounded-xl font-semibold shadow-sm sm:flex-none sm:px-6",

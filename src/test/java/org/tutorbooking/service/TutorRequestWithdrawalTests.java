@@ -23,14 +23,21 @@ import org.tutorbooking.repository.TutorRepository;
 import org.tutorbooking.repository.TutorRequestRepository;
 import org.tutorbooking.service.Impl.TutorRequestServiceImpl;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -84,11 +91,12 @@ class TutorRequestWithdrawalTests {
         Tutor tutor = tutor(2L);
         TutorApplication application = application(tutor, TutorApplicationStatus.PENDING, TutorRequestStatus.SEARCHING);
         stubWithdrawal(tutor, application);
+        stubRequestLock(application);
 
         service.withdrawApplication(APPLICATION_ID, TUTOR_USER_ID);
 
         verify(tutorApplicationRepository).delete(application);
-        verifyNoInteractions(tutorRequestRepository);
+        verify(tutorRequestRepository).findByIdForUpdate(application.getRequest().getId());
     }
 
     @Test
@@ -131,6 +139,7 @@ class TutorRequestWithdrawalTests {
         Tutor tutor = tutor(2L);
         TutorApplication application = application(tutor, TutorApplicationStatus.PENDING, TutorRequestStatus.HAS_APPLICANTS);
         stubWithdrawal(tutor, application);
+        stubRequestLock(application);
         remainingPendingApplications = 0L;
         TutorRequest request = application.getRequest();
 
@@ -146,6 +155,7 @@ class TutorRequestWithdrawalTests {
         Tutor tutor = tutor(2L);
         TutorApplication application = application(tutor, TutorApplicationStatus.PENDING, TutorRequestStatus.HAS_APPLICANTS);
         stubWithdrawal(tutor, application);
+        stubRequestLock(application);
         remainingPendingApplications = 1L;
         TutorRequest request = application.getRequest();
 
@@ -156,9 +166,95 @@ class TutorRequestWithdrawalTests {
         verify(tutorRequestRepository, never()).save(request);
     }
 
+    @Test
+    void concurrentWithdrawalsSerializeSoTheLastPendingApplicationReturnsTheRequestToSearching() throws Exception {
+        Long secondApplicationId = 2L;
+        Long secondTutorUserId = 11L;
+        TutorRequest request = TutorRequest.builder().id(2L).status(TutorRequestStatus.HAS_APPLICANTS).build();
+        Tutor firstTutor = tutor(2L);
+        Tutor secondTutor = tutor(3L);
+        TutorApplication firstApplication = TutorApplication.builder()
+                .id(APPLICATION_ID)
+                .tutor(firstTutor)
+                .request(request)
+                .status(TutorApplicationStatus.PENDING)
+                .build();
+        TutorApplication secondApplication = TutorApplication.builder()
+                .id(secondApplicationId)
+                .tutor(secondTutor)
+                .request(request)
+                .status(TutorApplicationStatus.PENDING)
+                .build();
+        Map<Long, TutorApplication> applications = Map.of(
+                APPLICATION_ID, firstApplication,
+                secondApplicationId, secondApplication);
+        Set<Long> pendingApplicationIds = ConcurrentHashMap.newKeySet();
+        pendingApplicationIds.addAll(applications.keySet());
+        CyclicBarrier simultaneousCount = new CyclicBarrier(2);
+        ReentrantLock requestLock = new ReentrantLock();
+        AtomicBoolean requestLockUsed = new AtomicBoolean();
+
+        TutorApplicationRepository concurrentApplications = mock(TutorApplicationRepository.class, invocation -> {
+            String methodName = invocation.getMethod().getName();
+            if ("findById".equals(methodName)) {
+                return Optional.of(applications.get(invocation.getArgument(0)));
+            }
+            if ("countByRequestIdAndStatusAndIdNot".equals(methodName)) {
+                Long applicationId = invocation.getArgument(2);
+                long remaining = pendingApplicationIds.stream().filter(id -> !id.equals(applicationId)).count();
+                if (!requestLockUsed.get()) {
+                    simultaneousCount.await(5, TimeUnit.SECONDS);
+                }
+                return remaining;
+            }
+            if ("delete".equals(methodName)) {
+                TutorApplication application = invocation.getArgument(0);
+                pendingApplicationIds.remove(application.getId());
+                if (requestLock.isHeldByCurrentThread()) {
+                    requestLock.unlock();
+                }
+                return null;
+            }
+            return Answers.RETURNS_DEFAULTS.answer(invocation);
+        });
+        TutorRequestRepository lockingRequests = mock(TutorRequestRepository.class, invocation -> {
+            if ("findByIdForUpdate".equals(invocation.getMethod().getName())) {
+                requestLock.lock();
+                requestLockUsed.set(true);
+                return Optional.of(request);
+            }
+            if ("save".equals(invocation.getMethod().getName())) {
+                return invocation.getArgument(0);
+            }
+            return Answers.RETURNS_DEFAULTS.answer(invocation);
+        });
+        TutorRequestServiceImpl concurrentService = new TutorRequestServiceImpl(
+                lockingRequests,
+                concurrentApplications,
+                parentRepository,
+                tutorRepository,
+                subjectRepository,
+                studentRepository,
+                emailService);
+        when(tutorRepository.findByUserId(TUTOR_USER_ID)).thenReturn(Optional.of(firstTutor));
+        when(tutorRepository.findByUserId(secondTutorUserId)).thenReturn(Optional.of(secondTutor));
+
+        CompletableFuture.allOf(
+                CompletableFuture.runAsync(() -> concurrentService.withdrawApplication(APPLICATION_ID, TUTOR_USER_ID)),
+                CompletableFuture.runAsync(() -> concurrentService.withdrawApplication(secondApplicationId, secondTutorUserId)))
+                .get(5, TimeUnit.SECONDS);
+
+        assertEquals(TutorRequestStatus.SEARCHING, request.getStatus());
+    }
+
     private void stubWithdrawal(Tutor tutor, TutorApplication application) {
         when(tutorRepository.findByUserId(TUTOR_USER_ID)).thenReturn(Optional.of(tutor));
         when(tutorApplicationRepository.findById(APPLICATION_ID)).thenReturn(Optional.of(application));
+    }
+
+    private void stubRequestLock(TutorApplication application) {
+        when(tutorRequestRepository.findByIdForUpdate(application.getRequest().getId()))
+                .thenReturn(Optional.of(application.getRequest()));
     }
 
     private Tutor tutor(Long id) {

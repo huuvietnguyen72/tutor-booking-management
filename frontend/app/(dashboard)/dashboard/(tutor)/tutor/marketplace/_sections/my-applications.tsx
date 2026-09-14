@@ -185,6 +185,7 @@ export function MyApplications() {
         variant="danger"
         isPending={isWithdrawing}
         pendingText="Đang rút..."
+        closeOnConfirm={false}
       />
     </div>
   );

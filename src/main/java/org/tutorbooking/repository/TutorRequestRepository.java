@@ -1,5 +1,6 @@
 package org.tutorbooking.repository;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.tutorbooking.domain.entity.TutorRequest;
@@ -28,6 +29,10 @@ public interface TutorRequestRepository extends JpaRepository<TutorRequest, Long
                 WHERE tr.id = :id
             """)
     Optional<TutorRequest> findDetailById(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT tr FROM TutorRequest tr WHERE tr.id = :requestId")
+    Optional<TutorRequest> findByIdForUpdate(@Param("requestId") Long requestId);
 
     // Lấy danh sách yêu cầu theo danh sách status
     @Query("""

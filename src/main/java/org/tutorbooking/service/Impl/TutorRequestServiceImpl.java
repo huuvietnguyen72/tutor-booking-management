@@ -221,7 +221,8 @@ public class TutorRequestServiceImpl implements TutorRequestService {
             throw new RuntimeException("Không thể rút lại ứng tuyển ở trạng thái hiện tại");
         }
 
-        TutorRequest request = application.getRequest();
+        TutorRequest request = tutorRequestRepository.findByIdForUpdate(application.getRequest().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Yêu cầu không tồn tại"));
         long remainingPendingApplications = tutorApplicationRepository.countByRequestIdAndStatusAndIdNot(
                 request.getId(), TutorApplicationStatus.PENDING, applicationId);
 
