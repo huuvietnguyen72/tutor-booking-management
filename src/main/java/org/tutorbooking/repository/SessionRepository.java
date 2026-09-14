@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.tutorbooking.domain.entity.Session;
 import org.tutorbooking.domain.enums.SessionStatus;
+import org.tutorbooking.repository.projection.BookingSessionSummary;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,6 +15,16 @@ import java.util.List;
 public interface SessionRepository extends JpaRepository<Session, Long> {
     List<Session> findByBookingId(Long bookingId);
     List<Session> findByBookingIdAndStatus(Long bookingId, SessionStatus status);
+
+    @Query("""
+            SELECT s.booking.id AS bookingId,
+                   COUNT(s.id) AS totalSessions,
+                   SUM(CASE WHEN s.status = org.tutorbooking.domain.enums.SessionStatus.COMPLETED THEN 1 ELSE 0 END) AS completedSessions
+            FROM Session s
+            WHERE s.booking.id IN :bookingIds
+            GROUP BY s.booking.id
+            """)
+    List<BookingSessionSummary> summarizeByBookingIds(@Param("bookingIds") List<Long> bookingIds);
 
     // Lọc sessions theo userId (qua booking → parent/tutor), có filter ngày và status
     @Query("SELECT s FROM Session s WHERE " +

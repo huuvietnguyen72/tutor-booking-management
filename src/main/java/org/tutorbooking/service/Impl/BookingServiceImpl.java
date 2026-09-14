@@ -16,13 +16,18 @@ import org.tutorbooking.dto.response.PageResponse;
 import org.tutorbooking.dto.response.SessionResponse;
 import org.tutorbooking.exception.ResourceNotFoundException;
 import org.tutorbooking.repository.*;
+import org.tutorbooking.repository.projection.BookingSessionSummary;
 import org.tutorbooking.service.BookingService;
 import org.tutorbooking.service.EmailService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -36,6 +41,7 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final SessionRepository sessionRepository;
+    private final ReviewRepository reviewRepository;
     private final TutorRepository tutorRepository;
     private final SubjectRepository subjectRepository;
     private final ParentRepository parentRepository;
@@ -109,7 +115,7 @@ public class BookingServiceImpl implements BookingService {
                 "WAITING_TUTOR_CONFIRM"
         );
 
-        return toBookingResponse(savedBooking, new ArrayList<>());
+        return toBookingResponse(savedBooking, new ArrayList<>(), null, false);
     }
     
     // GIA SƯ BẤM ĐỒNG Ý
@@ -284,8 +290,17 @@ public class BookingServiceImpl implements BookingService {
             bookingPage = bookingRepository.findByTutor_User_Id(userId, pageable);
         }
 
+        List<Long> bookingIds = bookingPage.getContent().stream().map(Booking::getId).toList();
+        Map<Long, BookingSessionSummary> sessionSummaries = bookingIds.isEmpty()
+                ? Map.of()
+                : sessionRepository.summarizeByBookingIds(bookingIds).stream()
+                        .collect(Collectors.toMap(BookingSessionSummary::getBookingId, Function.identity()));
+        Set<Long> reviewedBookingIds = bookingIds.isEmpty()
+                ? Set.of()
+                : new HashSet<>(reviewRepository.findReviewedBookingIds(bookingIds));
+
         List<BookingResponse> content = bookingPage.getContent().stream()
-                .map(b -> toBookingResponse(b, null))
+                .map(b -> toBookingResponse(b, null, sessionSummaries.get(b.getId()), reviewedBookingIds.contains(b.getId())))
                 .collect(Collectors.toList());
 
         return PageResponse.<BookingResponse>builder()
@@ -455,6 +470,17 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private BookingResponse toBookingResponse(Booking booking, List<SessionResponse> sessionResponses) {
+        List<BookingSessionSummary> sessionSummaries = sessionRepository.summarizeByBookingIds(List.of(booking.getId()));
+        BookingSessionSummary sessionSummary = sessionSummaries.isEmpty() ? null : sessionSummaries.get(0);
+        boolean isReviewed = reviewRepository.findReviewedBookingIds(List.of(booking.getId())).contains(booking.getId());
+        return toBookingResponse(booking, sessionResponses, sessionSummary, isReviewed);
+    }
+
+    private BookingResponse toBookingResponse(
+            Booking booking,
+            List<SessionResponse> sessionResponses,
+            BookingSessionSummary sessionSummary,
+            boolean isReviewed) {
         List<BookingResponse.ScheduleResponseItem> scheduleResponses = new ArrayList<>();
         if (booking.getSchedules() != null) {
             scheduleResponses = booking.getSchedules().stream()
@@ -484,6 +510,7 @@ public class BookingServiceImpl implements BookingService {
                 .tutorName(booking.getTutor().getUser().getFullName())
                 .tutorAvatar(booking.getTutor().getUser().getAvatarUrl())
                 .subjectId(booking.getSubject().getId())
+                .subjectName(booking.getSubject().getName())
                 .studentId(booking.getStudent() != null ? booking.getStudent().getId() : null)
                 .studentName(booking.getStudent() != null ? booking.getStudent().getFullName() : null)
                 .gradeLevel(booking.getGradeLevel())
@@ -494,6 +521,9 @@ public class BookingServiceImpl implements BookingService {
                 .recurringStartDate(booking.getRecurringStartDate())
                 .recurringEndDate(booking.getRecurringEndDate())
                 .status(booking.getStatus())
+                .totalSessions(sessionSummary != null ? sessionSummary.getTotalSessions() : 0L)
+                .completedSessions(sessionSummary != null ? sessionSummary.getCompletedSessions() : 0L)
+                .isReviewed(isReviewed)
                 .sessions(sessionResponses)
                 .paymentId(paymentId)
                 .build();

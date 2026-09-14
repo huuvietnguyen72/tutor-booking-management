@@ -7,8 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.tutorbooking.domain.entity.Review;
 
+import java.util.List;
+
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     boolean existsByBookingId(Long bookingId);
+    @Query("SELECT r.booking.id FROM Review r WHERE r.booking.id IN :bookingIds")
+    List<Long> findReviewedBookingIds(@Param("bookingIds") List<Long> bookingIds);
     Page<Review> findByTutorId(Long tutorId, Pageable pageable);
     Page<Review> findByTutorIdAndRating(Long tutorId, Integer rating, Pageable pageable);
 

@@ -42,6 +42,9 @@ public class BookingResponse {
     private LocalDate recurringStartDate;
     private LocalDate recurringEndDate;
     private BookingStatus status;
+    private Long totalSessions;
+    private Long completedSessions;
+    private Boolean isReviewed;
     private List<SessionResponse> sessions;
     private Long paymentId;
 }
