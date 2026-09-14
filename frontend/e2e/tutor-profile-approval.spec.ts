@@ -1,12 +1,15 @@
 import { expect, test } from "@playwright/test";
+import { login } from "./support/auth";
+import { restoreTestSeed } from "./support/seed";
+
+test.afterAll(async () => {
+  await restoreTestSeed();
+});
 
 test("rejected tutor updates qualifications once and dashboard becomes pending", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByPlaceholder("username@email.com").fill("tutor.rejected@test.local");
-  await page.getByPlaceholder("********").fill("Test@123");
-  await page.getByRole("button", { name: "Đăng nhập" }).click();
+  await login(page, "tutor.rejected@test.local", "Test@123");
   await expect(page).toHaveURL(/dashboard\/tutor\/overview/);
-  await expect(page.getByText("Cần bổ sung bản scan bằng cấp rõ ràng.")).toBeVisible();
+  await expect(page.getByText("Hồ sơ cần được hoàn thiện lại")).toBeVisible();
 
   await page.goto("/dashboard/tutor/profile");
   await page.getByLabel("Bằng cấp & Chứng chỉ").fill("Chứng chỉ đã bổ sung rõ ràng");

@@ -82,7 +82,7 @@ try {
         $env:MYSQL_PWD = $env:DB_PASSWORD
     }
 
-    $mysqlOutput = @($seedCommands | & $mysqlClient --protocol=TCP "--host=$databaseHost" "--port=$databasePort" "--user=$databaseUser" "--database=$databaseName" --batch --skip-column-names 2>&1)
+    $mysqlOutput = @($seedCommands | & $mysqlClient --protocol=TCP "--host=$databaseHost" "--port=$databasePort" "--user=$databaseUser" "--database=$databaseName" --default-character-set=utf8mb4 --batch --skip-column-names 2>&1)
     if ($LASTEXITCODE -ne 0) {
         $mysqlOutput | ForEach-Object { [Console]::Error.WriteLine($_) }
         exit $LASTEXITCODE
