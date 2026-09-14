@@ -154,7 +154,7 @@ export default function BookingPage() {
         gradeLevel: selectedSubject?.gradeLevel,
         notes: notes,
         isRecurring: bookingType === "long-term",
-        teachingMode: learningMode.toUpperCase(),
+        teachingMode: learningMode === "online" ? "ONLINE" : "OFFLINE",
         recurringStartDate: startDate,
         recurringEndDate: bookingType === "long-term" ? endDate : startDate,
         schedules: selectedSlots.map((s) => {
@@ -251,7 +251,7 @@ export default function BookingPage() {
             <div className="bg-card rounded-[2.5rem] p-6 sm:p-10 shadow-sm border border-border/20">
               {step === 1 && (
                 <Step1ChildSubject
-                  children={children}
+                  students={children}
                   selectedChildId={childId}
                   onChildSelect={setChildId}
                   selectedSubject={subject}

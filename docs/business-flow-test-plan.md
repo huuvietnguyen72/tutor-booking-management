@@ -17,9 +17,14 @@ Run only against the configured local MySQL instance and local application serve
 
 ```powershell
 npm run db:seed:test
+$env:CI = "1"
 npm --prefix frontend run test:e2e
 npm run db:seed:test
 ```
+
+The 2026-09-14 round-one verification ran this command with `CI=1`: all six
+journeys passed in 46.6 seconds, the final seed restored bookings 2 and 4, and
+no listeners remained on ports 3000 or 8080 after Playwright stopped its servers.
 
 ## Release Verification
 
@@ -40,6 +45,12 @@ git diff --stat
 ```
 
 Confirm that no applied migration changed, no credential or token was added, and no unrelated user change was overwritten.
+
+## Round-One Verification Evidence
+
+On 2026-09-14, `npm --prefix frontend run lint` completed with zero errors
+(76 warnings), `npm --prefix frontend run test:unit` passed 16 files and 29
+tests, and `npm --prefix frontend run build` completed successfully.
 
 ## Unexecuted Coverage
 

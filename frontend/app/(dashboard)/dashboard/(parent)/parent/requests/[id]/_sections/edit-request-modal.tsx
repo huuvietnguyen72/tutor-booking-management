@@ -49,7 +49,7 @@ export function EditRequestModal({ request }: EditRequestModalProps) {
     let toastId: string | number | undefined;
     try {
       const payload: IUpdateRequestRequest = {
-        teachingMode: data.teachingMode as any,
+        teachingMode: data.teachingMode,
         desiredPrice: data.desiredPrice,
         sessionsPerWeek: String(data.sessionsPerWeek),
         scheduleNote: data.scheduleNote,

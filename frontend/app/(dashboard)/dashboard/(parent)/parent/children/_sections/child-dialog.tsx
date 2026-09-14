@@ -113,7 +113,7 @@ export function ChildDialog({ isOpen, onClose, onSubmit, initialData }: ChildDia
       academicLevel: values.academicLevel,
       specialNotes: values.specialNotes,
       id: initialData?.id,
-    } as any);
+    });
     onClose();
   };
 

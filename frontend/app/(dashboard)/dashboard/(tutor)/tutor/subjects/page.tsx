@@ -54,7 +54,7 @@ export default function TutorSubjectsPage() {
            <div className="rounded-3xl bg-muted/30 border border-border p-6">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Lưu ý quan trọng</h4>
               <p className="text-[11px] font-medium text-muted-foreground/80 leading-relaxed italic">
-                "Việc thay đổi giá chỉ áp dụng cho các yêu cầu học mới. Các lớp học đang diễn ra vẫn giữ nguyên mức phí đã thỏa thuận."
+                 &quot;Việc thay đổi giá chỉ áp dụng cho các yêu cầu học mới. Các lớp học đang diễn ra vẫn giữ nguyên mức phí đã thỏa thuận.&quot;
               </p>
            </div>
         </div>

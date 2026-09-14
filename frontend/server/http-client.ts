@@ -11,6 +11,19 @@ import AUTH_PATHS from "./_paths/auth-path";
 import { IAuthResponse } from "./_types/auth-type";
 import { TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "./_constants/auth";
 
+interface FailedRequest {
+  resolve: (token: string | null) => void;
+  reject: (error: unknown) => void;
+}
+
+interface ErrorResponseBody {
+  success?: boolean;
+  message?: unknown;
+}
+
+function isErrorResponseBody(value: unknown): value is ErrorResponseBody {
+  return typeof value === "object" && value !== null;
+}
 
 declare module "axios" {
   export interface InternalAxiosRequestConfig {
@@ -21,7 +34,7 @@ declare module "axios" {
 class HttpClient {
   private api: AxiosInstance;
   private isRefreshing = false;
-  private failedQueue: any[] = [];
+  private failedQueue: FailedRequest[] = [];
   private noAuth: boolean;
 
   constructor(baseURL: string, noAuth: boolean) {
@@ -76,12 +89,13 @@ class HttpClient {
       async (error: unknown) => {
         if (!axios.isAxiosError(error)) throw error;
 
-        const responseData = error.response?.data as any;
-        const status = error.response?.status || (error as any).status;
+        const responseData: unknown = error.response?.data;
+        const status = error.response?.status || error.status;
         
         // Handle specific "authentication is null" error even if it returns 400 or other codes
-        const isAuthNullMessage = responseData?.success === false && 
-          typeof responseData?.message === "string" && 
+        const isAuthNullMessage = isErrorResponseBody(responseData) &&
+          responseData.success === false &&
+          typeof responseData.message === "string" &&
           responseData.message.includes("authentication\" is null");
 
         const originalRequest = error.config as InternalAxiosRequestConfig;
@@ -94,7 +108,7 @@ class HttpClient {
 
         if (isAuthError && originalRequest && !originalRequest._retry) {
           if (this.isRefreshing) {
-            return new Promise((resolve, reject) => {
+            return new Promise<string | null>((resolve, reject) => {
               this.failedQueue.push({ resolve, reject });
             })
               .then((token) => {
@@ -140,7 +154,7 @@ class HttpClient {
     );
   }
 
-  private processQueue(error: any, token: string | null = null) {
+  private processQueue(error: unknown, token: string | null = null) {
     this.failedQueue.forEach((prom) => {
       if (error) {
         prom.reject(error);
@@ -187,8 +201,8 @@ class HttpClient {
       if (axios.isAxiosError(error)) {
         const config = error.config;
         const errorMessage =
-          error?.response?.data?.message ||
-          error?.response?.data ||
+          (isErrorResponseBody(error.response?.data) && error.response.data.message) ||
+          error.response?.data ||
           error.message;
         console.error(
           `[HttpClient] ${config?.method?.toUpperCase()} ${config?.url} failed:`,

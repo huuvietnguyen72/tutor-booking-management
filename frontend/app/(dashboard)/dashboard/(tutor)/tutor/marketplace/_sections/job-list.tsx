@@ -5,14 +5,12 @@ import {
   Search,
   Filter,
   MapPin,
-  Calendar,
   DollarSign,
   Clock,
   ChevronRight,
   Sparkles,
   CheckCircle2,
   Loader2,
-  ChevronLeft,
   MessageSquare,
 } from "lucide-react";
 import {
@@ -37,7 +35,13 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 
-const JobCard = memo(function JobCard({ job, isSelected, onSelect }: any) {
+interface JobCardProps {
+  job: IRequest;
+  isSelected: boolean;
+  onSelect: (job: IRequest) => void;
+}
+
+const JobCard = memo(function JobCard({ job, isSelected, onSelect }: JobCardProps) {
   return (
     <div
       onClick={() => onSelect(job)}
@@ -132,12 +136,12 @@ export function JobList() {
     setSelectedJob(job);
   }, []);
 
-  const handleOpenApplyDialog = useCallback(() => {
+  const handleOpenApplyDialog = () => {
     if (selectedJob) {
       setProposedPrice(selectedJob.desiredPrice);
       setIsApplyDialogOpen(true);
     }
-  }, [selectedJob]);
+  };
 
   const handlePriceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setProposedPrice(Number(e.target.value));
@@ -162,7 +166,7 @@ export function JobList() {
           setIsApplyDialogOpen(false);
           setCoverLetter("");
         },
-        onError: (err: any) => {
+        onError: (err) => {
           toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi ứng tuyển"), { id: toastId });
         },
       },
@@ -246,7 +250,7 @@ export function JobList() {
                     Mô tả yêu cầu
                   </h4>
                   <p className="text-sm font-medium leading-relaxed text-foreground bg-muted/30 p-4 rounded-2xl border border-border italic">
-                    "{selectedJob.description || "Không có mô tả chi tiết"}"
+                    &quot;{selectedJob.description || "Không có mô tả chi tiết"}&quot;
                   </p>
                 </div>
 

@@ -1,13 +1,13 @@
 "use client";
 
 import { memo, useMemo } from "react";
+import type { LucideIcon } from "lucide-react";
 import { 
   Users, 
   CalendarCheck, 
   Clock, 
   Wallet,
   ArrowUpRight,
-  Loader2
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useGetMyBookings } from "@/server/_actions/booking-action";
@@ -21,7 +21,7 @@ const SummaryStatCard = memo(function SummaryStatCard({
   stat: {
     title: string;
     value: string;
-    icon: any;
+     icon: LucideIcon;
     description: string;
     color: string;
     trend: string;

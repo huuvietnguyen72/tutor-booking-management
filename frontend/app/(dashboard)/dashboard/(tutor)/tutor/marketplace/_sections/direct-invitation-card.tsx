@@ -8,7 +8,7 @@ import { Card } from "@/shared/components/ui/card";
 import { User, BookOpen, GraduationCap, DollarSign, Calendar, MessageSquare, Check, X, Quote } from "lucide-react";
 import { toast } from "sonner";
 import { cn, formatErrorMessage } from "@/shared/lib/utils";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface DirectInvitationCardProps {
   invitation: IDirectInvitation;
@@ -18,10 +18,6 @@ export function DirectInvitationCard({ invitation }: DirectInvitationCardProps) 
   const { mutate: respond, isPending } = useRespondToInvitation();
   const [localStatus, setLocalStatus] = useState(invitation.status);
 
-  useEffect(() => {
-    setLocalStatus(invitation.status);
-  }, [invitation.status]);
-
   const handleRespond = (status: "ACCEPTED" | "DECLINED") => {
     const toastId = toast.loading("Đang xử lý...");
     respond({ id: invitation.id, status }, {
@@ -29,7 +25,7 @@ export function DirectInvitationCard({ invitation }: DirectInvitationCardProps) 
         toast.success(res.message, { id: toastId });
         setLocalStatus(status);
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Có lỗi xảy ra, vui lòng thử lại."), { id: toastId });
       }
     });
@@ -123,7 +119,7 @@ export function DirectInvitationCard({ invitation }: DirectInvitationCardProps) 
               <Quote size={18} className="absolute -top-2 -left-1.5 text-primary/10 -scale-x-100 z-10 transition-colors group-hover/msg:text-primary/20" />
               <div className="rounded-xl bg-muted/20 p-4 border border-border/30 backdrop-blur-[2px]">
                 <p className="text-xs text-muted-foreground font-medium underline-offset-4 decoration-primary/10 leading-relaxed italic line-clamp-2 hover:line-clamp-none transition-all cursor-help">
-                  "{invitation.message}"
+                   &quot;{invitation.message}&quot;
                 </p>
               </div>
             </div>

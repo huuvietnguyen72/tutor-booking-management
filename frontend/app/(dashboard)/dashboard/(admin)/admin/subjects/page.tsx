@@ -7,11 +7,28 @@ import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Plus, Edit2, Trash2, Library, Users, ArrowRight, Save, X, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useCallback, useMemo, memo } from "react";
+import { useState, useCallback, useMemo, memo, type ChangeEvent } from "react";
 import { ConfirmDialog } from "@/shared/components/ui/confirm-dialog";
 import { formatErrorMessage } from "@/shared/lib/utils";
 
-const SubjectEditCard = memo(function SubjectEditCard({ subject, formData, onSave, onCancel, onNameChange, onDescChange }: any) {
+type SubjectFormData = Pick<SubjectResponse, "name" | "description">;
+
+interface SubjectEditCardProps {
+  subject?: SubjectResponse;
+  formData: SubjectFormData;
+  onSave: (id?: number) => void;
+  onCancel: () => void;
+  onNameChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onDescChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
+}
+
+interface SubjectCardProps {
+  subject: SubjectResponse;
+  onEdit: (subject: SubjectResponse) => void;
+  onDelete: (id: number) => void;
+}
+
+const SubjectEditCard = memo(function SubjectEditCard({ subject, formData, onSave, onCancel, onNameChange, onDescChange }: SubjectEditCardProps) {
   return (
     <Card className="p-6 border-2 border-dashed border-primary/40 bg-primary/5 rounded-4xl flex flex-col gap-4 animate-in zoom-in-95 duration-300">
       <div className="space-y-4">
@@ -37,7 +54,7 @@ const SubjectEditCard = memo(function SubjectEditCard({ subject, formData, onSav
   );
 });
 
-const SubjectCard = memo(function SubjectCard({ subject, onEdit, onDelete }: any) {
+const SubjectCard = memo(function SubjectCard({ subject, onEdit, onDelete }: SubjectCardProps) {
   return (
     <Card className="p-8 border-none shadow-xl shadow-black/5 bg-card/60 backdrop-blur-sm rounded-4xl group hover:bg-card hover:scale-[1.02] transition-all duration-500 relative overflow-hidden">
       <>
@@ -101,11 +118,11 @@ const SubjectManagementPage = () => {
   const [formData, setFormData] = useState({ name: "", description: "" });
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const handleNameChange = useCallback((e: any) => {
+  const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, name: e.target.value }));
   }, []);
 
-  const handleDescChange = useCallback((e: any) => {
+  const handleDescChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
     setFormData(prev => ({ ...prev, description: e.target.value }));
   }, []);
 
@@ -123,13 +140,14 @@ const SubjectManagementPage = () => {
         setIsAdding(false);
         setFormData({ name: "", description: "" });
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Không thể thêm môn học. Vui lòng thử lại."), { id: toastId });
       }
     });
   }, [formData, createMutation]);
 
-  const handleUpdate = useCallback((id: number) => {
+  const handleUpdate = useCallback((id?: number) => {
+    if (id === undefined) return;
     const toastId = toast.loading("Đang cập nhật môn học...");
     updateMutation.mutate({ id, ...formData }, {
       onSuccess: () => {
@@ -137,7 +155,7 @@ const SubjectManagementPage = () => {
         setEditingId(null);
         setFormData({ name: "", description: "" });
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Không thể cập nhật môn học. Vui lòng thử lại."), { id: toastId });
       }
     });
@@ -165,7 +183,7 @@ const SubjectManagementPage = () => {
           toast.success("Đã xóa môn học!", { id: toastId });
           setDeleteId(null);
         },
-        onError: (err: any) => {
+        onError: (err) => {
           toast.error(formatErrorMessage(err, "Không thể xóa môn học. Vui lòng thử lại."), { id: toastId });
         }
       });
@@ -200,7 +218,6 @@ const SubjectManagementPage = () => {
         {/* Add New Card Overlay */}
         {isAdding && (
           <SubjectEditCard
-            subject={null}
             formData={formData}
             onSave={handleCreate}
             onCancel={() => setIsAdding(false)}

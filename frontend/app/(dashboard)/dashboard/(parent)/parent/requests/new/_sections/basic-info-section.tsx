@@ -20,6 +20,12 @@ interface BasicInfoSectionProps {
   disabledFields?: Array<keyof RequestFormValues>;
 }
 
+const teachingModes = [
+  { label: "Tại nhà", value: "OFFLINE" },
+  { label: "Online", value: "ONLINE" },
+  { label: "Cả hai", value: "BOTH" },
+] as const;
+
 export function BasicInfoSection({ disabledFields = [] }: BasicInfoSectionProps) {
   const {
     register,
@@ -164,11 +170,7 @@ export function BasicInfoSection({ disabledFields = [] }: BasicInfoSectionProps)
         <div className="space-y-3 col-span-1 md:col-span-2">
           <Label className="text-sm font-bold ml-1">Hình thức học</Label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {[
-              { label: "Tại nhà", value: "OFFLINE" },
-              { label: "Online", value: "ONLINE" },
-              { label: "Cả hai", value: "BOTH" },
-            ].map((m) => (
+            {teachingModes.map((m) => (
               <label
                 key={m.value}
                 className={cn(
@@ -183,7 +185,7 @@ export function BasicInfoSection({ disabledFields = [] }: BasicInfoSectionProps)
                   className="hidden"
                   value={m.value}
                   checked={selectedMethod === m.value}
-                  onChange={() => setValue("teachingMode", m.value as any)}
+                  onChange={() => setValue("teachingMode", m.value)}
                 />
                 {m.label}
               </label>

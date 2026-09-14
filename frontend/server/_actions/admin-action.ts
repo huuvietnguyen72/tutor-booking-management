@@ -3,7 +3,7 @@ import { axiosInstance } from "../http-client";
 import ADMIN_PATHS from "../_paths/admin-path";
 import SUBJECT_PATHS from "../_paths/subject-path";
 import { QUERY_KEYS } from "../_constants/query-keys";
-import { AdminStatsResponse, SubjectResponse, TutorPendingResponse, UserResponse } from "../_types/admin-type";
+import { AdminStatsResponse, SubjectResponse, TopTutorResponse, TutorPendingResponse, UserResponse } from "../_types/admin-type";
 import { ApiResponse, IPageResponse } from "../_types/base";
 // ... (các phần cũ giữ nguyên)
 export const useGetUsers = (params?: { role?: string; isActive?: boolean; keyword?: string; page?: number; size?: number }) => {
@@ -100,7 +100,7 @@ export const useGetTopTutors = () => {
   return useQuery({
     queryKey: ["ADMIN", "TOP_TUTORS"],
     queryFn: async () => {
-      const res = await axiosInstance.get<ApiResponse<any[]>>(ADMIN_PATHS.TOP_TUTORS);
+      const res = await axiosInstance.get<ApiResponse<TopTutorResponse[]>>(ADMIN_PATHS.TOP_TUTORS);
       return res.data;
     },
   });
@@ -154,7 +154,7 @@ export const useRejectTutor = () => {
 };
 
 export const useGetPayments = () => {
-  return useQuery<any[], Error>({
+  return useQuery<unknown[], Error>({
     queryKey: QUERY_KEYS.ADMIN.GET_PAYMENTS,
     queryFn: async () => {
       return [];
@@ -163,7 +163,7 @@ export const useGetPayments = () => {
 };
 
 export const useGetWithdrawals = () => {
-  return useQuery<any[], Error>({
+  return useQuery<unknown[], Error>({
     queryKey: QUERY_KEYS.ADMIN.GET_WITHDRAWALS,
     queryFn: async () => {
       return [];

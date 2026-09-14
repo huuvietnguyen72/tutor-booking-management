@@ -50,11 +50,11 @@ export default function ChangePasswordPage() {
       oldPassword: formData.oldPassword,
       newPassword: formData.newPassword,
     }, {
-      onSuccess: (res: any) => {
+      onSuccess: (res) => {
         toast.success(res.message || "Đổi mật khẩu thành công");
         setFormData({ oldPassword: "", newPassword: "", confirmPassword: "" });
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Có lỗi xảy ra khi đổi mật khẩu"));
       },
     });

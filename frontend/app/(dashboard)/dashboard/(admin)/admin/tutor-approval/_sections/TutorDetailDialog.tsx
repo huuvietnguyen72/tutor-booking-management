@@ -59,7 +59,7 @@ export const TutorDetailDialog = ({ tutors, tutorId, open, onOpenChange }: Tutor
         approveConfirm.close();
         onOpenChange(false);
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi phê duyệt"), { id: toastId });
       }
     });
@@ -81,7 +81,7 @@ export const TutorDetailDialog = ({ tutors, tutorId, open, onOpenChange }: Tutor
         handleCloseRejectDialog();
         onOpenChange(false);
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi từ chối hồ sơ"), { id: toastId });
       }
     });

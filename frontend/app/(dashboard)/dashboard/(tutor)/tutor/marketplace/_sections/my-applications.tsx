@@ -32,7 +32,7 @@ export function MyApplications() {
         toast.success("Đã rút hồ sơ thành công", { id: toastId });
         setWithdrawId(null);
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Không thể rút hồ sơ"), { id: toastId });
       }
     });
@@ -88,7 +88,7 @@ export function MyApplications() {
         </div>
         <h3 className="text-xl font-black text-foreground mb-2">Chưa có ứng tuyển nào</h3>
         <p className="text-sm font-medium text-muted-foreground max-w-xs uppercase tracking-tight">
-          Hãy truy cập "Cơ hội mới" để tìm kiếm lớp học phù hợp với bạn
+          Hãy truy cập &quot;Cơ hội mới&quot; để tìm kiếm lớp học phù hợp với bạn
         </p>
       </div>
     );
@@ -147,7 +147,7 @@ export function MyApplications() {
               {/* Cover Letter Snippet */}
               <div className="flex-1 mb-6">
                  <p className="text-xs font-medium text-muted-foreground line-clamp-3 bg-muted/30 p-4 rounded-xl italic">
-                   "{app.coverLetter}"
+                    &quot;{app.coverLetter}&quot;
                  </p>
               </div>
 

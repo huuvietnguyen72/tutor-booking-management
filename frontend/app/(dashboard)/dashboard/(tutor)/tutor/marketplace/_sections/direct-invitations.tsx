@@ -24,36 +24,31 @@ export function DirectInvitations() {
   const { data: response, isLoading } = useGetDirectInvitations({ perPage: 200 });
   const allInvitations: IDirectInvitation[] = response?.data || [];
 
-  // Helper function để lọc và sắp xếp
-  const processList = (list: IDirectInvitation[]) => {
-    let result = [...list];
-    
-    // Tìm kiếm
-    if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase();
-      result = result.filter(
-        (inv) =>
-          inv.parentName?.toLowerCase().includes(q) ||
-          inv.subjectName?.toLowerCase().includes(q) ||
-          inv.studentName?.toLowerCase().includes(q) ||
-          inv.message?.toLowerCase().includes(q)
-      );
-    }
-
-    // Sắp xếp
-    if (sortBy === "newest") {
-      result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-    } else if (sortBy === "oldest") {
-      result.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
-    } else if (sortBy === "budget-high") {
-      result.sort((a, b) => (b.budget || 0) - (a.budget || 0));
-    }
-
-    return result;
-  };
-
-  // Chia danh sách theo tab (Memoized)
+  // Keep filtering local to this memoized calculation so its dependencies remain explicit.
   const lists = useMemo(() => {
+    const processList = (list: IDirectInvitation[]) => {
+      let result = [...list];
+      if (debouncedSearch) {
+        const query = debouncedSearch.toLowerCase();
+        result = result.filter(
+          (invitation) =>
+            invitation.parentName?.toLowerCase().includes(query) ||
+            invitation.subjectName?.toLowerCase().includes(query) ||
+            invitation.studentName?.toLowerCase().includes(query) ||
+            invitation.message?.toLowerCase().includes(query),
+        );
+      }
+
+      if (sortBy === "newest") {
+        result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      } else if (sortBy === "oldest") {
+        result.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+      } else if (sortBy === "budget-high") {
+        result.sort((a, b) => (b.budget || 0) - (a.budget || 0));
+      }
+
+      return result;
+    };
     const pendingRaw = allInvitations.filter((i) => i.status === "PENDING");
     const historyRaw = allInvitations.filter((i) => 
       i.status === "ACCEPTED" || 
@@ -107,7 +102,7 @@ export function DirectInvitations() {
     return (
       <div className="grid grid-cols-1 gap-6">
         {currentList.map((invitation) => (
-          <DirectInvitationCard key={invitation.id} invitation={invitation} />
+          <DirectInvitationCard key={`${invitation.id}-${invitation.status}`} invitation={invitation} />
         ))}
       </div>
     );

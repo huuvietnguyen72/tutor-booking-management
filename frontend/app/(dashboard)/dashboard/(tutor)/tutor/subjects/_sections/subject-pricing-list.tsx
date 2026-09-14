@@ -34,6 +34,8 @@ interface IGroupedSubject {
   }[];
 }
 
+type EditableSubjectEntryField = "gradeLevel" | "pricePerSession";
+
 export function SubjectPricingList() {
   const { data: user } = useGetTutorProfile();
   const { data: subjects, isLoading: isSubjectsLoading } = useGetTutorSubjects(user?.id || "", !!user?.id);
@@ -102,7 +104,7 @@ export function SubjectPricingList() {
     }));
   }, []);
 
-  const updateEntry = useCallback((subjectId: number, entryId: number | string, field: string, value: any) => {
+  const updateEntry = useCallback((subjectId: number, entryId: number | string, field: EditableSubjectEntryField, value: number) => {
     setLocalGrouped(prev => prev.map(group => {
       if (group.subjectId === subjectId) {
         return {
@@ -133,7 +135,7 @@ export function SubjectPricingList() {
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
-      const promises: Promise<any>[] = [];
+      const promises: Promise<unknown>[] = [];
       
       localGrouped.forEach(group => {
         group.entries.forEach(e => {
@@ -164,7 +166,7 @@ export function SubjectPricingList() {
 
       await Promise.all(promises);
       toast.success("Cập nhật môn học và học phí thành công");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi lưu thay đổi"));
     } finally {
@@ -248,7 +250,7 @@ export function SubjectPricingList() {
                  </div>
 
                  <div className="space-y-3">
-                   {group.entries.filter(e => !e.isDeleted).map((entry, index) => (
+                    {group.entries.filter(e => !e.isDeleted).map((entry) => (
                      <div key={entry.id} className="flex gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="relative flex-1">
                            <Layers size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 z-10" />

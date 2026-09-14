@@ -57,7 +57,7 @@ export const BookingDetailModal = ({ booking, isOpen, onClose }: BookingDetailMo
         setShowConfirmCancel(false);
         onClose();
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Không thể hủy khóa học"));
       }
     });
@@ -71,7 +71,7 @@ export const BookingDetailModal = ({ booking, isOpen, onClose }: BookingDetailMo
         setShowConfirmPause(false);
         onClose();
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Không thể tạm dừng khóa học"));
       }
     });
@@ -85,7 +85,7 @@ export const BookingDetailModal = ({ booking, isOpen, onClose }: BookingDetailMo
         setShowConfirmResume(false);
         onClose();
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Không thể tiếp tục khóa học"));
       }
     });

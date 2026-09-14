@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { useAddSessionNote } from "@/server/_actions/session-action";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Save, FileText } from "lucide-react";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -29,12 +29,6 @@ export function SessionDetailModal({ isOpen, onClose, session, role }: SessionDe
   const [note, setNote] = useState(session?.sessionNote || "");
   const [isEditing, setIsEditing] = useState(false);
   const addNoteMutation = useAddSessionNote();
-
-  useEffect(() => {
-    if (session) {
-      setNote(session.sessionNote || "");
-    }
-  }, [session]);
 
   if (!session) return null;
 
@@ -206,7 +200,7 @@ export function SessionDetailModal({ isOpen, onClose, session, role }: SessionDe
                     <Info size={14} className="text-red-500" />
                     <p className="text-[10px] font-black text-red-500/80 uppercase tracking-widest">Lý do hủy buổi</p>
                   </div>
-                  <p className="text-sm font-medium text-foreground italic">"{session.cancelReason}"</p>
+                   <p className="text-sm font-medium text-foreground italic">&quot;{session.cancelReason}&quot;</p>
                 </div>
               )}
           </div>

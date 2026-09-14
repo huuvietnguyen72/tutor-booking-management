@@ -23,7 +23,15 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
 
-const TutorCard = memo(function TutorCard({ tutor, isLoading, onDetail, onApprove, onReject }: any) {
+interface TutorCardProps {
+  tutor: TutorPendingResponse;
+  isLoading: boolean;
+  onDetail: (id: number) => void;
+  onApprove: (id: number) => void;
+  onReject: (id: number) => void;
+}
+
+const TutorCard = memo(function TutorCard({ tutor, isLoading, onDetail, onApprove, onReject }: TutorCardProps) {
   return (
     <Card className="p-4 md:p-5 border-none shadow-lg shadow-black/5 bg-card/60 backdrop-blur-sm group hover:bg-card hover:scale-[1.01] transition-all duration-300">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -129,7 +137,7 @@ const TutorApprovalPage = () => {
         setIsApproveConfirmOpen(false);
         setActionTutorId(null);
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi phê duyệt"), { id: toastId });
       }
     });
@@ -152,7 +160,7 @@ const TutorApprovalPage = () => {
         setActionTutorId(null);
         setRejectReason("");
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi từ chối hồ sơ"), { id: toastId });
       }
     });

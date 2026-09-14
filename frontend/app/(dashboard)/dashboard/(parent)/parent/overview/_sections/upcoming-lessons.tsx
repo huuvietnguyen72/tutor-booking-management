@@ -3,6 +3,7 @@
 import { memo, useMemo } from "react";
 import Link from "next/link";
 import { ChevronRight, Clock, CheckCircle2, XCircle, Inbox } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { ROUTES } from "@/shared/constants/app";
 import { useGetMySessions } from "@/server/_actions/session-action";
@@ -13,7 +14,7 @@ import { formatSessionDate, formatSessionTime, parseSessionDateTime } from "@/sh
 
 // ─── Status Config ────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<SessionStatus, { label: string; className: string; icon: any }> = {
+const STATUS_CONFIG: Record<SessionStatus, { label: string; className: string; icon: LucideIcon }> = {
   PENDING: { 
     label: "Chờ xác nhận", 
     className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-100 dark:border-amber-500/20", 

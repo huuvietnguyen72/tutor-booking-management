@@ -1,18 +1,41 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../http-client";
 import BOOKING_PATHS from "../_paths/booking-path";
-import { IBooking, IBookingStats, BookingStatus } from "../_types/booking-type";
+import { IBooking, IBookingStats } from "../_types/booking-type";
 import { ApiResponse, IPageResponse } from "../_types/base";
 import { IDirectInvitation } from "../_types/marketplace-type";
 
-export const useGetMyBookings = (params?: {
+interface BookingListParams {
   page?: number;
   size?: number;
   perPage?: number;
   status?: string;
-}) => {
+}
+
+export interface ICreateBookingRequest {
+  tutorId: number;
+  studentId: number;
+  subjectId?: number;
+  gradeLevel?: number;
+  notes?: string;
+  isRecurring: boolean;
+  teachingMode: "ONLINE" | "OFFLINE";
+  recurringStartDate: string;
+  recurringEndDate: string;
+  schedules: Array<{
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+  }>;
+}
+
+interface InvitationResponse {
+  message: string;
+}
+
+export const useGetMyBookings = (params?: BookingListParams) => {
   // Backend dùng 0-based pagination, UI dùng 1-based
-  const backendParams: any = {};
+  const backendParams: { page?: number; size?: number; status?: string } = {};
   if (params) {
     if (params.page != null) backendParams.page = params.page - 1;
     if (params.size != null) backendParams.size = params.size;
@@ -50,7 +73,7 @@ export const useGetBookingDetail = (id: string | number, enabled = true) =>
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => axiosInstance.post(BOOKING_PATHS.CREATE, data),
+    mutationFn: (data: ICreateBookingRequest) => axiosInstance.post(BOOKING_PATHS.CREATE, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
     },
@@ -186,11 +209,11 @@ export const useRespondToInvitation = () => {
 
   const mutate = (
     { id, status }: { id: string; status: "ACCEPTED" | "DECLINED" },
-    options?: { onSuccess?: (res: any) => void; onError?: (err: any) => void },
+    options?: { onSuccess?: (res: InvitationResponse) => void; onError?: (err: unknown) => void },
   ) => {
     const mutation = status === "ACCEPTED" ? acceptMutation : declineMutation;
     return mutation.mutate(id, {
-      onSuccess: (res) => {
+      onSuccess: () => {
         if (options?.onSuccess) {
           options.onSuccess({
             message:

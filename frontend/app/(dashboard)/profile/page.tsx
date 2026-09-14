@@ -90,7 +90,7 @@ export default function ProfilePage() {
       onSuccess: (res) => {
         toast.success(res.message);
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Có lỗi xảy ra khi cập nhật hồ sơ"));
       },
     });
@@ -123,7 +123,7 @@ export default function ProfilePage() {
       onSuccess: (res) => {
         toast.success(res.message);
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Có lỗi xảy ra khi tải ảnh lên"));
       },
     });

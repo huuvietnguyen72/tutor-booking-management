@@ -11,6 +11,7 @@ import {
   Check,
   Info
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/components/ui/avatar";
 import { ISession, SessionStatus } from "@/server/_types/session-type";
 import { vi } from "date-fns/locale";
@@ -26,7 +27,7 @@ interface ScheduleCardProps {
   session: ISession;
 }
 
-const statusConfig: Record<SessionStatus, { label: string; icon: any; color: string; bg: string; border: string }> = {
+const statusConfig: Record<SessionStatus, { label: string; icon: LucideIcon; color: string; bg: string; border: string }> = {
   PENDING: {
     label: "Chờ xác nhận",
     icon: Clock,
@@ -77,7 +78,7 @@ export function ScheduleCard({ session }: ScheduleCardProps) {
     const toastId = toast.loading("Đang xác nhận dạy...");
     confirmMutation.mutate(session.id, {
       onSuccess: () => toast.success("Đã xác nhận buổi dạy!", { id: toastId }),
-      onError: (error: any) => toast.error(formatErrorMessage(error, "Lỗi khi xác nhận. Vui lòng thử lại."), { id: toastId }),
+      onError: (error) => toast.error(formatErrorMessage(error, "Lỗi khi xác nhận. Vui lòng thử lại."), { id: toastId }),
     });
   };
 
@@ -85,7 +86,7 @@ export function ScheduleCard({ session }: ScheduleCardProps) {
     const toastId = toast.loading("Đang đánh dấu hoàn thành...");
     completeMutation.mutate(session.id, {
       onSuccess: () => toast.success("Đã hoàn thành buổi dạy!", { id: toastId }),
-      onError: (error: any) => toast.error(formatErrorMessage(error, "Lỗi khi cập nhật. Vui lòng thử lại."), { id: toastId }),
+      onError: (error) => toast.error(formatErrorMessage(error, "Lỗi khi cập nhật. Vui lòng thử lại."), { id: toastId }),
     });
   };
 
@@ -96,7 +97,7 @@ export function ScheduleCard({ session }: ScheduleCardProps) {
         toast.success("Đã hủy buổi học!", { id: toastId });
           cancelDialog.close();
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Lỗi khi hủy. Vui lòng thử lại."), { id: toastId });
       },
     });
@@ -288,7 +289,7 @@ export function ScheduleCard({ session }: ScheduleCardProps) {
         </div>
       </div>
 
-      <SessionDetailModal isOpen={detailDialog.value} onClose={detailDialog.close} session={session} role="tutor" />
+      <SessionDetailModal key={`${session.id}-${detailDialog.value}`} isOpen={detailDialog.value} onClose={detailDialog.close} session={session} role="tutor" />
 
       <CancelSessionDialog 
         isOpen={cancelDialog.value}

@@ -4,6 +4,7 @@ import { TutorCard } from "./tutor-card";
 import { Search } from "lucide-react";
 import { useTutorFilter } from "@/shared/hooks/use-tutor-filter";
 import { formatErrorMessage } from "@/shared/lib/utils";
+import type { ITutorDetail } from "@/server/_types/tutor-type";
 
 export function TutorList() {
   const { paginatedTutors, totalCount, isLoading, isError, error } = useTutorFilter();
@@ -54,7 +55,7 @@ export function TutorList() {
             </p>
           </div>
         ) : paginatedTutors.length > 0 ? (
-          paginatedTutors.map((tutor: any) => (
+          paginatedTutors.map((tutor: ITutorDetail) => (
             <TutorCard key={tutor.id} tutor={tutor} />
           ))
         ) : (

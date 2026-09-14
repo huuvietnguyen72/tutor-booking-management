@@ -3,13 +3,14 @@
 import { useGetAdminStats, useGetTopTutors } from "@/server/_actions/admin-action";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { 
+import {
   Users, 
   ShieldCheck, 
   BarChart3, 
   CreditCard,
   ArrowUpRight,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn, formatCurrency } from "@/shared/lib/utils";
 import { GrowthChart } from "./_sections/growth-chart";
 import Image from "next/image";
@@ -25,7 +26,7 @@ const StatCard = ({
 }: { 
   title: string; 
   value: string | number; 
-  icon: any; 
+  icon: LucideIcon;
   description?: string;
   trend?: string;
   colorClass: string;
@@ -137,7 +138,7 @@ const AdminDashboard = () => {
 
 const TopTutorsSection = () => {
   const { data: topTutorsData, isLoading } = useGetTopTutors();
-  const topTutors = Array.isArray(topTutorsData) ? topTutorsData : (topTutorsData as any)?.content || [];
+  const topTutors = topTutorsData ?? [];
 
   return (
     <Card className="border-none shadow-xl shadow-black/5 bg-card/40 backdrop-blur-md rounded-4xl overflow-hidden">
@@ -153,7 +154,7 @@ const TopTutorsSection = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {(topTutors || []).slice(0, 5).map((tutor: any, index: number) => (
+            {topTutors.slice(0, 5).map((tutor, index) => (
               <div key={tutor.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/30 transition-colors group">
                 <div className="flex items-center gap-3">
                   <div className="relative">

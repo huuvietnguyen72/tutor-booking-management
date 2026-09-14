@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { 
   AreaChart, 
   Area, 
@@ -11,7 +11,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { Button } from "@/shared/components/ui/button";
 import { cn, formatCurrency } from "@/shared/lib/utils";
 import { TrendingUp, Users, DollarSign } from "lucide-react";
 
@@ -25,13 +24,11 @@ const MOCK_DATA = [
   { date: "07/04", revenue: 8500000, users: 35 },
 ];
 
+const subscribeToClient = () => () => {};
+
 export function GrowthChart() {
   const [activeTab, setActiveTab] = useState<"revenue" | "users">("revenue");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(subscribeToClient, () => true, () => false);
 
   return (
     <Card className="shadow-xl shadow-black/5 bg-card/50 backdrop-blur-sm border-none rounded-4xl overflow-hidden group">
@@ -121,10 +118,13 @@ export function GrowthChart() {
                   color: "var(--muted-foreground)",
                   marginBottom: "4px"
                 }}
-                formatter={(value: any) => [
-                  activeTab === "revenue" ? formatCurrency(Number(value)) : `${value} TV mới`,
-                  activeTab === "revenue" ? "Doanh thu" : "Thành viên"
-                ]}
+                formatter={(value: number | string | readonly (number | string)[] | undefined) => {
+                  const displayValue = typeof value === "object" ? value[0] ?? 0 : value ?? 0;
+                  return [
+                    activeTab === "revenue" ? formatCurrency(Number(displayValue)) : `${displayValue} TV mới`,
+                    activeTab === "revenue" ? "Doanh thu" : "Thành viên",
+                  ];
+                }}
               />
               <Area
                 type="monotone"

@@ -6,8 +6,8 @@ import { CourseStats } from "./_sections/course-stats";
 import { CourseFilters } from "./_sections/course-filters";
 import { CourseList } from "./_sections/course-list";
 import { useState, useMemo } from "react";
-import { GraduationCap, Clock, BookOpen, CheckCircle, CreditCard } from "lucide-react";
-import { IBooking, BookingStatus } from "@/server/_types/booking-type";
+import { GraduationCap, Clock, BookOpen, CheckCircle } from "lucide-react";
+import { IBooking } from "@/server/_types/booking-type";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { toast } from "sonner";
 import { formatErrorMessage } from "@/shared/lib/utils";
@@ -117,7 +117,7 @@ export default function CoursesPage() {
 
             {/* Content */}
             <CourseList 
-              courses={finalBookings as any} 
+                courses={finalBookings}
               isLoading={isLoading} 
             />
           </div>

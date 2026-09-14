@@ -7,7 +7,6 @@ import { toSlug, cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/components/ui/button";
 import Link from "next/link";
 
-import { useState, useEffect } from "react";
 
 interface ApplicantCardProps {
   applicant: IApplicant;
@@ -20,11 +19,7 @@ export function ApplicantCard({
   onAccept,
   onDecline,
 }: ApplicantCardProps) {
-  const [localStatus, setLocalStatus] = useState<typeof applicant.status>(applicant.status);
-
-  useEffect(() => {
-    setLocalStatus(applicant.status);
-  }, [applicant.status]);
+  const localStatus = applicant.status;
 
   const handleAcceptClick = () => {
     onAccept?.();

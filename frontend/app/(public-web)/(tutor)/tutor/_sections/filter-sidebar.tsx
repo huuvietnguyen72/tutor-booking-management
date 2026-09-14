@@ -17,6 +17,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useDebounce } from "@/shared/hooks/use-debounce" 
 import { LEVEL_OPTIONS, RATING_OPTIONS } from "@/shared/constants/filter-options"
 import { useGetAllSubjects } from "@/server/_actions/tutor-action"
+import type { ISubject } from "@/server/_types/tutor-type"
 
 export function FilterSidebar() {
   const router = useRouter()
@@ -168,7 +169,7 @@ export function FilterSidebar() {
           {isLoadingSubjects ? (
             <div className="text-sm text-muted-foreground animate-pulse">Đang tải môn học...</div>
           ) : (
-            allSubjects?.map((subject: any) => (
+            allSubjects?.map((subject: ISubject) => (
               <div key={subject.id} className="flex items-center space-x-3 group cursor-pointer p-1 rounded-lg hover:bg-muted/50 transition-colors">
                 <Checkbox 
                   id={subject.name} 

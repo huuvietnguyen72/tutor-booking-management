@@ -19,6 +19,7 @@ import {
   mergeToRanges 
 } from "@/shared/components/features/availability-grid";
 import { cn, formatErrorMessage } from "@/shared/lib/utils";
+import { ITutorAvailabilityRequest } from "@/server/_types/tutor-type";
 
 export function WeeklyAvailability() {
   const { data: profile } = useGetTutorProfile();
@@ -58,7 +59,7 @@ export function WeeklyAvailability() {
 
     try {
       // 1. Convert current grid to discrete 2-hour ranges
-      const newRanges: any[] = [];
+      const newRanges: ITutorAvailabilityRequest[] = [];
       Object.entries(slotsMap).forEach(([day, hours]) => {
         hours.forEach(hour => {
           const startHour = parseInt(hour.split(":")[0]);
@@ -74,7 +75,7 @@ export function WeeklyAvailability() {
       // 2. Compute the Diff (Delta) to avoid deleting untouched slots
       const oldRanges = availability || [];
       const toDeleteIds: number[] = [];
-      const toAddRanges: any[] = [];
+      const toAddRanges: ITutorAvailabilityRequest[] = [];
       
       const matchedNewRanges = new Set();
 

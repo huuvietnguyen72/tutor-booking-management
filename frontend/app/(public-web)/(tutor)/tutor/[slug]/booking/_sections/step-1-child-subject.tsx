@@ -18,7 +18,7 @@ import { ITutorSubject } from "@/server/_types/tutor-type";
 import Link from "next/link";
 
 interface Step1Props {
-  children: IStudent[];
+  students: IStudent[];
   selectedChildId: string;
   onChildSelect: (id: string) => void;
   selectedSubject: string;
@@ -30,7 +30,7 @@ interface Step1Props {
 }
 
 export function Step1ChildSubject({
-  children,
+  students,
   selectedChildId,
   onChildSelect,
   selectedSubject,
@@ -56,7 +56,7 @@ export function Step1ChildSubject({
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {children.map((child) => (
+          {students.map((child) => (
             <button
               key={child.id}
               onClick={() => onChildSelect(child.id.toString())}
@@ -100,7 +100,7 @@ export function Step1ChildSubject({
               </span>
             </button>
           ))}
-          {children.length === 0 && (
+          {students.length === 0 && (
             <div className="col-span-full py-8 text-center rounded-4xl border-2 border-dashed border-border bg-muted/5">
               <p className="text-sm font-bold text-muted-foreground">Bạn chưa có hồ sơ học sinh nào.</p>
               <Link href="/dashboard/parent/students">

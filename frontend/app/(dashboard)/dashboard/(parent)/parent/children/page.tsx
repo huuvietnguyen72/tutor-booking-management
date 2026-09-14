@@ -45,7 +45,7 @@ export default function ChildrenManagementPage() {
           toast.success(`Đã cập nhật hồ sơ bé ${data.fullName} thành công!`, { id: toastId });
           setIsDialogOpen(false);
         },
-        onError: (error: any) => {
+        onError: (error) => {
           toast.error(formatErrorMessage(error, "Không thể cập nhật hồ sơ. Vui lòng thử lại."), { id: toastId });
         }
       });
@@ -56,7 +56,7 @@ export default function ChildrenManagementPage() {
           toast.success(`Đã thêm bé ${data.fullName} vào danh sách thành công!`, { id: toastId });
           setIsDialogOpen(false);
         },
-        onError: (error: any) => {
+        onError: (error) => {
           toast.error(formatErrorMessage(error, "Không thể thêm hồ sơ. Vui lòng thử lại."), { id: toastId });
         }
       });
@@ -80,7 +80,7 @@ export default function ChildrenManagementPage() {
           setIsConfirmOpen(false);
           setChildToDelete(null);
         },
-        onError: (error: any) => {
+        onError: (error) => {
           toast.error(formatErrorMessage(error, "Không thể xóa hồ sơ. Vui lòng thử lại."), { id: toastId });
         }
       });

@@ -1,18 +1,14 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useCallback } from "react";
+import type { ComponentProps } from "react";
 import Image from "next/image";
 import { 
   User, 
-  Mail, 
-  Phone, 
   Camera, 
   ShieldCheck, 
-  ChevronRight,
   Loader2,
-  Save,
   Fingerprint,
-  KeyRound,
   Lock
 } from "lucide-react";
 import { useGetMe, useUpdateProfile, useUpdateAvatar } from "@/server/_actions/auth-action";
@@ -86,31 +82,23 @@ export default function TutorProfilePage() {
   const { mutate: uploadAvatar, isPending: isUploadingAvatar } = useUpdateAvatar();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [formData, setFormData] = useState({
-    fullName: "",
-    phone: "",
-  });
-
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        fullName: user.fullName || "",
-        phone: user.phone || "",
-      });
-    }
-  }, [user]);
+  const [formData, setFormData] = useState<{ fullName: string; phone: string } | null>(null);
+  const displayedFormData = formData ?? {
+    fullName: user?.fullName ?? "",
+    phone: user?.phone ?? "",
+  };
 
   const handleSubmitBasic = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(formData, {
+    updateProfile(displayedFormData, {
       onSuccess: (res) => {
         toast.success(res.message);
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Có lỗi xảy ra khi cập nhật hồ sơ"));
       },
     });
-  }, [formData, updateProfile]);
+  }, [displayedFormData, updateProfile]);
 
   const handleAvatarClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -139,19 +127,25 @@ export default function TutorProfilePage() {
       onSuccess: (res) => {
         toast.success(res.message);
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Có lỗi xảy ra khi tải ảnh lên"));
       },
     });
   }, [uploadAvatar]);
 
   const handleFullNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, fullName: e.target.value }));
-  }, []);
+    setFormData((previous) => ({
+      ...(previous ?? displayedFormData),
+      fullName: e.target.value,
+    }));
+  }, [displayedFormData]);
 
   const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, phone: e.target.value }));
-  }, []);
+    setFormData((previous) => ({
+      ...(previous ?? displayedFormData),
+      phone: e.target.value,
+    }));
+  }, [displayedFormData]);
 
   if (isUserLoading) {
     return (
@@ -236,7 +230,7 @@ export default function TutorProfilePage() {
                   </label>
                   <input
                     type="text"
-                    value={formData.fullName}
+                    value={displayedFormData.fullName}
                     onChange={handleFullNameChange}
                     className="h-12 w-full rounded-xl border-border bg-muted/30 px-4 text-xs font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all"
                   />
@@ -247,7 +241,7 @@ export default function TutorProfilePage() {
                   </label>
                   <input
                     type="tel"
-                    value={formData.phone}
+                    value={displayedFormData.phone}
                     onChange={handlePhoneChange}
                     className="h-12 w-full rounded-xl border-border bg-muted/30 px-4 text-xs font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all"
                   />
@@ -314,8 +308,9 @@ export default function TutorProfilePage() {
                  </div>
               </div>
               
-               <TutorProfileForm
-                 profile={tutorProfile}
+                <TutorProfileForm
+                  key={tutorProfile?.id ?? "loading"}
+                  profile={tutorProfile}
                  isLoading={isTutorLoading}
                  isError={isTutorError}
                  onRetry={refetchTutorProfile}
@@ -327,7 +322,7 @@ export default function TutorProfilePage() {
   );
 }
 
-function Button({ children, className, ...props }: any) {
+function Button({ children, className, ...props }: ComponentProps<"button">) {
   return (
     <button
       className={`inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 ${className}`}

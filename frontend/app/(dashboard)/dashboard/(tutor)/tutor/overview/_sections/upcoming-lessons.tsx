@@ -53,7 +53,7 @@ const LessonCard = memo(function LessonCard({ lesson, index }: { lesson: ISessio
       onSuccess: () => {
         toast.success("Đã xác nhận buổi dạy!", { id: toastId });
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Không thể xác nhận buổi dạy. Vui lòng thử lại."), { id: toastId });
       }
     });
@@ -65,7 +65,7 @@ const LessonCard = memo(function LessonCard({ lesson, index }: { lesson: ISessio
       onSuccess: () => {
         toast.success("Buổi dạy đã hoàn thành!", { id: toastId });
       },
-      onError: (error: any) => {
+      onError: (error) => {
         toast.error(formatErrorMessage(error, "Không thể cập nhật trạng thái. Vui lòng thử lại."), { id: toastId });
       }
     });

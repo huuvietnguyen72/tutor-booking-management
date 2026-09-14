@@ -4,6 +4,7 @@ import {
   useSearchTutors, 
   useGetAllSubjects 
 } from "@/server/_actions/tutor-action";
+import type { ISubject } from "@/server/_types/tutor-type";
 
 export const ITEMS_PER_PAGE = 5;
 
@@ -29,7 +30,7 @@ export function useTutorFilter() {
   const subjectId = useMemo(() => {
     if (selectedSubjectNames.length === 0 || !allSubjects) return undefined;
     // Current API only takes ONE subjectId. Let's take the first one.
-    const firstSubject = allSubjects.find((s: any) => s.name === selectedSubjectNames[0]);
+    const firstSubject = allSubjects.find((s: ISubject) => s.name === selectedSubjectNames[0]);
     return firstSubject?.id;
   }, [selectedSubjectNames, allSubjects]);
 

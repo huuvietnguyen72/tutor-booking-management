@@ -18,6 +18,15 @@ export interface UserResponse {
   createdAt: string;
 }
 
+export interface TopTutorResponse {
+  id: number;
+  fullName: string;
+  avatarUrl?: string;
+  subjectCount?: number;
+  totalSessions?: number;
+  earnings?: number;
+}
+
 export interface SubjectResponse {
   id: number;
   name: string;

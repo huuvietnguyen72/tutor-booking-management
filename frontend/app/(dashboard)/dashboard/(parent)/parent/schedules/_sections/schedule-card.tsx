@@ -56,7 +56,7 @@ export function ScheduleCard({ session }: ScheduleCardProps) {
           toast.success("Đã hủy buổi học thành công");
           setIsCancelOpen(false);
         },
-        onError: (error: any) => {
+        onError: (error) => {
           toast.error(formatErrorMessage(error, "Không thể hủy buổi học"));
         },
       }
@@ -208,6 +208,7 @@ export function ScheduleCard({ session }: ScheduleCardProps) {
       </div>
 
       <SessionDetailModal
+        key={`${session.id}-${isDetailOpen}`}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         session={session}

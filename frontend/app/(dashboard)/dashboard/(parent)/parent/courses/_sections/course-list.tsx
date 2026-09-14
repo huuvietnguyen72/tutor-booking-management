@@ -25,6 +25,12 @@ interface CourseListProps {
   isLoading: boolean;
 }
 
+interface CourseStatusConfig {
+  label: string;
+  color: string;
+  dot: string;
+}
+
 export const CourseList = ({ courses, isLoading }: CourseListProps) => {
   const [selectedBooking, setSelectedBooking] = useState<IBooking | null>(null);
   const [reviewingBooking, setReviewingBooking] = useState<IBooking | null>(null);
@@ -45,7 +51,7 @@ export const CourseList = ({ courses, isLoading }: CourseListProps) => {
           toast.success("Cảm ơn bạn đã đánh giá!");
           setReviewingBooking(null);
         },
-        onError: (error: any) => {
+        onError: (error) => {
           toast.error(formatErrorMessage(error, "Không thể gửi đánh giá"));
         },
       }
@@ -131,7 +137,7 @@ const CourseCard = ({
   onViewDetail: () => void;
   onReview: () => void;
 }) => {
-  const statusConfig: Record<BookingStatus, any> = {
+  const statusConfig: Record<BookingStatus, CourseStatusConfig> = {
     WAITING_TUTOR_CONFIRM: {
       label: "Chờ xác nhận",
       color: "text-slate-500 bg-slate-500/10 border-slate-500/20",

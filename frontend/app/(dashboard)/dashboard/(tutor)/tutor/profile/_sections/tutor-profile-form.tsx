@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   BookOpen,
   MapPin,
@@ -9,9 +9,7 @@ import {
   Save,
   Loader2,
   Globe,
-  Home,
   Zap,
-  ChevronDown,
 } from "lucide-react";
 import {
   Select,
@@ -47,28 +45,13 @@ export function TutorProfileForm({
   const { mutate: updateProfile, isPending: isUpdating } =
     useUpdateTutorProfile();
 
-  const [formData, setFormData] = useState<IUpdateTutorRequest>({
-    educationLevel: "BACHELOR",
-    experience: "",
-    qualifications: "",
-    teachingMode: "ONLINE",
-    teachingArea: "",
-  });
-
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    if (profile && !isInitialized) {
-      setFormData({
-        educationLevel: profile.educationLevel || "BACHELOR",
-        experience: profile.experience || "",
-        qualifications: profile.qualifications || "",
-        teachingMode: profile.teachingMode || "ONLINE",
-        teachingArea: profile.teachingArea || "",
-      });
-      setIsInitialized(true);
-    }
-  }, [profile, isInitialized]);
+  const [formData, setFormData] = useState<IUpdateTutorRequest>(() => ({
+    educationLevel: profile?.educationLevel || "BACHELOR",
+    experience: profile?.experience || "",
+    qualifications: profile?.qualifications || "",
+    teachingMode: profile?.teachingMode || "ONLINE",
+    teachingArea: profile?.teachingArea || "",
+  }));
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -80,10 +63,10 @@ export function TutorProfileForm({
     }
 
     updateProfile(formData, {
-      onSuccess: (res: any) => {
+      onSuccess: (res) => {
         toast.success(res.message || "Cập nhật hồ sơ gia sư thành công");
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi cập nhật hồ sơ gia sư"));
       },
     });
@@ -196,7 +179,6 @@ export function TutorProfileForm({
               Hình thức dạy
             </label>
             <Select
-              key={`teaching-mode-${isInitialized}`}
               value={formData.teachingMode}
               onValueChange={handleTeachingModeChange}
             >

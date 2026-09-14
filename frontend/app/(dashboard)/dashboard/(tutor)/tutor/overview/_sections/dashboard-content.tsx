@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { format } from "date-fns";
 import { useGetMe } from "@/server/_actions/auth-action";
 import { useGetMySessions } from "@/server/_actions/session-action";
@@ -39,7 +39,11 @@ const statusConfig: Record<
 };
 
 export function TutorDashboardContent() {
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const token = getCookie(APP_SAVE_KEY.TOKEN_KEY);
   const { data: user, isLoading: isUserLoading } = useGetMe({
     enabled: !!token && isMounted,
@@ -57,10 +61,6 @@ export function TutorDashboardContent() {
   const todayUpcomingSessionsCount = sessionsResponse?.content?.filter(
     (s) => s.sessionDate === todayStr && (s.status === "PENDING" || s.status === "CONFIRMED")
   ).length || 0;
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   if (!isMounted) {
     return (

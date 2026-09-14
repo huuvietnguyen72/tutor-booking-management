@@ -1,12 +1,13 @@
 import { format, parseISO, isValid } from "date-fns";
+import type { Locale } from "date-fns";
 import { vi } from "date-fns/locale";
 
 /**
  * Checks if a given value is a valid Date object or can be parsed into one.
  */
-export function isValidDate(date: any): boolean {
+export function isValidDate(date: string | number | Date | undefined | null): boolean {
   if (!date) return false;
-  const d = typeof date === "string" ? parseISO(date) : new Date(date);
+  const d = typeof date === "string" ? parseISO(date) : new Date(date instanceof Date ? date.getTime() : date);
   return isValid(d);
 }
 
@@ -41,7 +42,7 @@ export function safeParseISO(dateString: string | undefined | null): Date | null
 export function safeFormat(
   date: string | Date | undefined | null,
   formatStr: string,
-  options: { fallback?: string; locale?: any } = {}
+  options: { fallback?: string; locale?: Locale } = {}
 ): string {
   const { fallback = "N/A", locale = vi } = options;
 
@@ -126,7 +127,7 @@ export function formatSessionDate(
   sessionDate: string | undefined | null,
   time: string | undefined | null,
   formatStr: string,
-  options: { fallback?: string; locale?: any } = {}
+  options: { fallback?: string; locale?: Locale } = {}
 ): string {
   const { fallback = "N/A", locale = vi } = options;
   const date = parseSessionDateTime(sessionDate, time);

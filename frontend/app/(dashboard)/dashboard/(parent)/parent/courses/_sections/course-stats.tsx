@@ -2,12 +2,13 @@
 
 import { useGetCourseStats } from "@/server/_actions/course-action";
 import { memo, useMemo } from "react";
-import { 
+import {
   BookOpen, 
   CheckCircle2, 
   Clock, 
   Layers 
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn, formatErrorMessage } from "@/shared/lib/utils";
 import { toast } from "sonner";
@@ -20,7 +21,7 @@ const StatCard = memo(function StatCard({
   card: {
     label: string;
     value: number | string;
-    icon: any;
+    icon: LucideIcon;
     color: string;
     shadow: string;
   };

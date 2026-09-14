@@ -10,15 +10,20 @@ import Link from "next/link";
 import { ITutorDetail } from "@/server/_types/tutor-type";
 
 interface TutorCardProps {
-  tutor: ITutorDetail | any; // Accept ITutorDetail or legacy Tutor for transitions
+  tutor: ITutorDetail & {
+    isTopRated?: boolean;
+    price?: number;
+    responseTime?: string;
+    subjects?: string[];
+  };
 }
 
 function TutorCardBase({ tutor }: TutorCardProps) {
   // Mapping API fields to UI terms with fallbacks
-  const name = tutor.fullName || tutor.name || "Gia sư";
-  const avatar = tutor.avatarUrl || tutor.avatar || "https://api.dicebear.com/7.x/avataaars/png?seed=" + name;
+  const name = tutor.fullName || "Gia sư";
+  const avatar = tutor.avatarUrl || "https://api.dicebear.com/7.x/avataaars/png?seed=" + name;
   const rating = tutor.rating || 5.0;
-  const reviewCount = tutor.reviewCount || 0;
+  const reviewCount = tutor.totalReviews || 0;
   
   // Handling price - Search API currently missing this
   // We'll use a placeholder or try to find it in the object
@@ -27,10 +32,10 @@ function TutorCardBase({ tutor }: TutorCardProps) {
   // Handling subjects - Search API missing this
   const subjects = Array.isArray(tutor.subjects) ? tutor.subjects : ["Toán học", "Tiếng Anh"]; 
 
-  const education = tutor.educationLevel || tutor.university || "Đại học";
-  const major = tutor.qualifications || tutor.major || "Sư phạm";
+  const education = tutor.educationLevel || "Đại học";
+  const major = tutor.qualifications || "Sư phạm";
   const bio = tutor.experience || tutor.bio || "Tận tâm, nhiệt tình với học viên...";
-  const location = tutor.teachingArea || tutor.location || "Toàn quốc";
+  const location = tutor.teachingArea || "Toàn quốc";
   const responseTime = tutor.responseTime || "Trả lời nhanh";
 
   return (

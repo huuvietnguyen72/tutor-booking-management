@@ -11,6 +11,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { ArrowLeft, CalendarIcon, Loader2 } from "lucide-react";
 import { useGetTutorAvailability } from "@/server/_actions/tutor-action";
+import type { ITutorAvailability } from "@/server/_types/tutor-type";
 
 import { Slot } from "../page";
 
@@ -66,7 +67,7 @@ export function Step2Schedule({
   // Map tutor availability to the format expected by the grid
   const availableSlots = useMemo(() => {
     const initial: Record<number, string[]> = {};
-    availability.forEach((s: any) => {
+    availability.forEach((s: ITutorAvailability) => {
       if (!initial[s.dayOfWeek]) initial[s.dayOfWeek] = [];
       const start = parseInt(s.startTime.split(":")[0]);
       const end = parseInt(s.endTime.split(":")[0]);

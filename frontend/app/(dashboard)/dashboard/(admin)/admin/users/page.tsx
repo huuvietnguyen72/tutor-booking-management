@@ -1,19 +1,25 @@
 "use client";
 
-import { useState, useCallback, useMemo, memo } from "react";
+import { useState, useCallback, useMemo, memo, type ChangeEvent } from "react";
 import Image from "next/image";
-import { useGetUsers, useGetAdminStats, useGetTopTutors, useDeleteUser } from "@/server/_actions/admin-action";
+import { useGetUsers, useDeleteUser } from "@/server/_actions/admin-action";
 import { UserResponse } from "@/server/_types/admin-type";
 import { Card } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { Badge } from "@/shared/components/ui/badge";
-import { Search, UserCog, Trash2, UserCheck, Mail, Shield, Filter, LucideIcon, Trash } from "lucide-react";
+import { Search, UserCog, Trash2, Mail, Shield, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/shared/components/ui/confirm-dialog";
 import { formatErrorMessage } from "@/shared/lib/utils";
 
-const UserRow = memo(function UserRow({ user, isDeleting, onDelete }: any) {
+interface UserRowProps {
+  user: UserResponse;
+  isDeleting: boolean;
+  onDelete: (id: number) => void;
+}
+
+const UserRow = memo(function UserRow({ user, isDeleting, onDelete }: UserRowProps) {
   const roleBgColor = useMemo(() => {
     switch (user.role) {
       case 'ADMIN':
@@ -91,7 +97,7 @@ const UserManagementPage = () => {
 
   const users = usersData?.content || [];
 
-  const handleKeywordChange = useCallback((e: any) => {
+  const handleKeywordChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setKeyword(e.target.value);
   }, []);
 
@@ -107,7 +113,7 @@ const UserManagementPage = () => {
         toast.success("Đã xóa tài khoản thành công!", { id: toastId });
         setDeleteId(null);
       },
-      onError: (err: any) => {
+      onError: (err) => {
         toast.error(formatErrorMessage(err, "Có lỗi xảy ra khi xóa tài khoản"), { id: toastId });
       }
     });

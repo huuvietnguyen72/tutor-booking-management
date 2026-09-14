@@ -13,6 +13,25 @@ import {
 import { ITutorReviewSummary } from "../_types/review-type";
 import { normalizeTutorDetail, TutorDetailWire } from "../_normalizers/tutor-normalizer";
 
+interface TutorSearchParams {
+  page?: number;
+  size?: number;
+  perPage?: number;
+  subjectId?: number;
+  grade?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  teachingMode?: string;
+  fullName?: string;
+  approvalStatus?: string;
+}
+
+interface TutorReviewParams {
+  page?: number;
+  size?: number;
+  perPage?: number;
+}
+
 // --- Hooks ---
 
 // 0. Get All Available Subjects (for selection)
@@ -202,7 +221,7 @@ export const useDeleteTutorAvailability = () => {
 };
 
 // 7. Search Tutors
-export const useSearchTutors = (params: any) => {
+export const useSearchTutors = (params: TutorSearchParams) => {
   return useQuery({
     queryKey: ["search-tutors", params],
     queryFn: async () => {
@@ -234,7 +253,7 @@ export const useGetTutorDetail = (id: string | number, enabled = true) => {
 };
 
 // 9. Get Tutor Reviews
-export const useGetTutorReviews = (id: string | number, params?: any) => {
+export const useGetTutorReviews = (id: string | number, params?: TutorReviewParams) => {
   return useQuery({
     queryKey: ["tutor-reviews", id, params],
     queryFn: async () => {
