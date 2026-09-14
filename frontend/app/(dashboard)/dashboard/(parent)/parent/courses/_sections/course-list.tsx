@@ -1,7 +1,6 @@
 "use client";
 
 import { IBooking, BookingStatus } from "@/server/_types/booking-type";
-import { ISession } from "@/server/_types/session-type";
 import { 
   Calendar, 
   ChevronRight, 
@@ -9,15 +8,13 @@ import {
   Star, 
   User, 
   Clock,
-  MoreVertical,
-  Pause,
-  Play
+  MoreVertical
 } from "lucide-react";
 import Image from "next/image";
 import { cn, formatErrorMessage } from "@/shared/lib/utils";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-import { memo, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { BookingDetailModal } from "./booking-detail-modal";
 import { ReviewModal } from "../../schedules/_sections/review-modal";
 import { useSubmitReview } from "@/server/_actions/review-action";
@@ -174,17 +171,12 @@ const CourseCard = ({
 
   const config = statusConfig[course.status] || statusConfig.PENDING;
   
-  // Calculate accurately based on actual sessions (sections)
-  const totalSessions = Math.max(course.sessions?.length || 0, course.totalSessions || 0);
-  const completedSessions = course.sessions?.filter(s => s.status === "COMPLETED" || s.status === "CONFIRMED").length || course.completedSessions || 0;
+  const totalSessions = course.totalSessions ?? course.sessions?.length ?? 0;
+  const completedSessions = course.completedSessions
+    ?? course.sessions?.filter((session) => session.status === "COMPLETED").length
+    ?? 0;
   const progress = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
-
-  // Check if booking has been reviewed
-  const isReviewed = useMemo(() => {
-    if (course.status !== "COMPLETED" || !course.sessions) return false;
-    const completedSessionsList = course.sessions.filter(s => s.status === "COMPLETED" || s.status === "CONFIRMED");
-    return completedSessionsList.length > 0 && completedSessionsList.every(s => s.reviewId);
-  }, [course.status, course.sessions]);
+  const isReviewed = course.isReviewed ?? false;
 
   const handleViewDetailClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {

@@ -84,11 +84,11 @@ export function SummaryCards() {
       {
         icon: Star,
         label: "Chưa đánh giá",
-        value: sessions.filter((s) => s.status === "COMPLETED" && !s.reviewId).length,
+        value: bookings.filter((b) => b.status === "COMPLETED" && !b.isReviewed).length,
         color: "text-purple-600 dark:text-purple-400",
         bgColor: "bg-purple-50 dark:bg-purple-500/10",
         borderColor: "border-purple-100 dark:border-purple-500/20",
-        isLoading: isSessionsLoading,
+        isLoading: isBookingsLoading,
       },
     ],
     [bookings, isBookingsLoading, isRequestsLoading, isSessionsLoading, requests, sessions]

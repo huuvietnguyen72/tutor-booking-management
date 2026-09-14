@@ -23,8 +23,10 @@ export const useSubmitReview = () => {
       const res = await axiosInstance.post<ApiResponse<IReview>>(REVIEW_PATHS.SUBMIT, data);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["REVIEWS"] });
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-detail", variables.bookingId] });
     },
   });
 };

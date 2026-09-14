@@ -35,8 +35,8 @@ export const useGetMyBookings = (params?: {
   });
 };
 
-export const useGetBookingDetail = (id: string | number) => {
-  return useQuery({
+export const useGetBookingDetail = (id: string | number, enabled = true) =>
+  useQuery({
     queryKey: ["booking-detail", id],
     queryFn: async () => {
       const res = await axiosInstance.get<ApiResponse<IBooking>>(
@@ -44,9 +44,8 @@ export const useGetBookingDetail = (id: string | number) => {
       );
       return res.data;
     },
-    enabled: !!id,
+    enabled: enabled && Boolean(id),
   });
-};
 
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();

@@ -8,7 +8,6 @@ export interface ISession {
   startTime: string;
   endTime: string;
   status: SessionStatus;
-  reviewId?: number;
 }
 
 export interface ISchedule {
@@ -34,16 +33,16 @@ export interface IBooking {
   recurringStartDate: string;
   recurringEndDate: string;
   status: BookingStatus;
-  sessions?: ISession[];
-  completedSessions?: number;
-  totalSessions?: number;
+  subjectName: string;
+  totalSessions: number;
+  completedSessions: number;
+  isReviewed: boolean;
+  sessions?: ISession[] | null;
   tutorName?: string;
-  subjectName?: string;
   studentName?: string;
   startDate?: string;
   endDate?: string;
   paymentId?: number;
-  isReviewed?: boolean;
 }
 
 export interface IBookingStats {

@@ -21,7 +21,6 @@ export interface ISession {
   sessionNote?: string;
   price: number;
   isPaid: boolean;
-  reviewId?: number;
   cancelReason?: string;
   createdAt?: string;
   updatedAt?: string;

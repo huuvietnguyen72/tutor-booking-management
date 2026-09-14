@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/shared/components/ui/dialog";
-import { useDeclineBooking, usePauseBooking, useResumeBooking } from "@/server/_actions/booking-action";
+import { useDeclineBooking, useGetBookingDetail, usePauseBooking, useResumeBooking } from "@/server/_actions/booking-action";
 import { 
   Calendar, 
   Clock, 
@@ -38,6 +38,12 @@ export const BookingDetailModal = ({ booking, isOpen, onClose }: BookingDetailMo
   const { mutate: cancelBooking, isPending: isCancelling } = useDeclineBooking();
   const { mutate: pauseBooking, isPending: isPausing } = usePauseBooking();
   const { mutate: resumeBooking, isPending: isResuming } = useResumeBooking();
+  const {
+    data: detail,
+    isLoading: isDetailLoading,
+    isError: isDetailError,
+    refetch: refetchDetail,
+  } = useGetBookingDetail(booking?.id ?? "", isOpen);
   
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [showConfirmPause, setShowConfirmPause] = useState(false);
@@ -84,10 +90,18 @@ export const BookingDetailModal = ({ booking, isOpen, onClose }: BookingDetailMo
       }
     });
   };
-  const getDayName = (day: number) => {
-    const days = ["Chủ Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
-    return days[day - 1] || `Thứ ${day}`;
+  const isoWeekdayLabels: Record<number, string> = {
+    1: "Thứ 2",
+    2: "Thứ 3",
+    3: "Thứ 4",
+    4: "Thứ 5",
+    5: "Thứ 6",
+    6: "Thứ 7",
+    7: "Chủ Nhật",
   };
+
+  const getDayName = (day: number) => isoWeekdayLabels[day] || `Thứ ${day}`;
+  const detailSessions = detail?.sessions;
 
   if (!isOpen) return null;
 
@@ -138,8 +152,10 @@ export const BookingDetailModal = ({ booking, isOpen, onClose }: BookingDetailMo
               {/* Progress Tracker */}
               <div className="mb-8 rounded-3xl bg-primary/5 dark:bg-primary/10 p-6 border border-primary/10 dark:border-primary/20">
                 {(() => {
-                  const totalSessions = Math.max(booking.sessions?.length || 0, booking.totalSessions || 0);
-                  const completedSessions = booking.sessions?.filter(s => s.status === "COMPLETED" || s.status === "CONFIRMED").length || booking.completedSessions || 0;
+                  const totalSessions = booking.totalSessions ?? booking.sessions?.length ?? 0;
+                  const completedSessions = booking.completedSessions
+                    ?? booking.sessions?.filter((session) => session.status === "COMPLETED").length
+                    ?? 0;
                   const progress = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
                   
                   return (
@@ -256,13 +272,27 @@ export const BookingDetailModal = ({ booking, isOpen, onClose }: BookingDetailMo
               </div>
 
               {/* Sessions Section */}
-              {booking.sessions && booking.sessions.length > 0 && (
+              {isDetailLoading ? (
+                <div className="mt-8 border-t border-border/50 pt-6 text-xs font-bold text-muted-foreground">
+                  Đang tải chi tiết buổi học...
+                </div>
+              ) : isDetailError ? (
+                <div className="mt-8 border-t border-border/50 pt-6 text-xs font-bold text-muted-foreground">
+                  <p>Không thể tải chi tiết buổi học.</p>
+                  <button
+                    onClick={() => refetchDetail()}
+                    className="mt-3 rounded-xl border border-border px-3 py-2 text-[10px] font-black uppercase tracking-wider text-foreground transition-colors hover:bg-muted"
+                  >
+                    Thử lại
+                  </button>
+                </div>
+              ) : detailSessions && detailSessions.length > 0 ? (
                 <div className="mt-8 pt-6 border-t border-border/50">
                   <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground mb-4">
-                    <ListTodo size={14} className="text-primary" /> Chi tiết {booking.sessions.length} buổi học
+                    <ListTodo size={14} className="text-primary" /> Chi tiết {detailSessions.length} buổi học
                   </h4>
                   <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
-                    {booking.sessions.map((session) => (
+                    {detailSessions.map((session) => (
                       <div key={session.id} className="flex items-center justify-between p-3 rounded-2xl bg-muted/50 dark:bg-muted/20 border border-border/50">
                         <div className="flex items-center gap-3">
                           <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-primary/10 dark:bg-primary/20 min-w-[50px] border border-primary/10">
@@ -292,7 +322,7 @@ export const BookingDetailModal = ({ booking, isOpen, onClose }: BookingDetailMo
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
 
