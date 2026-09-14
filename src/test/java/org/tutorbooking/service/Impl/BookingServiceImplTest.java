@@ -3,14 +3,18 @@ package org.tutorbooking.service.Impl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.tutorbooking.domain.entity.Booking;
+import org.tutorbooking.domain.entity.BookingSchedule;
 import org.tutorbooking.domain.entity.Parent;
+import org.tutorbooking.domain.entity.Session;
 import org.tutorbooking.domain.entity.Subject;
 import org.tutorbooking.domain.entity.Tutor;
 import org.tutorbooking.domain.entity.TutorSubject;
 import org.tutorbooking.domain.entity.User;
+import org.tutorbooking.domain.enums.BookingStatus;
 import org.tutorbooking.domain.enums.TeachingMode;
 import org.tutorbooking.dto.request.BookingCreateRequest;
 import org.tutorbooking.repository.BookingRepository;
@@ -25,9 +29,11 @@ import org.tutorbooking.service.EmailService;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -95,6 +101,27 @@ class BookingServiceImplTest {
                 eq("tutor@example.test"), eq("Tutor Test"), eq("Mathematics"), eq("WAITING_TUTOR_CONFIRM"));
     }
 
+    @Test
+    void acceptBookingCreatesFiveMondaySessionsInRecurringRange() {
+        Booking booking = recurringMondayBooking();
+        when(bookingRepository.findById(99L)).thenReturn(Optional.of(booking));
+        ArgumentCaptor<List<Session>> sessionsCaptor = ArgumentCaptor.forClass(List.class);
+
+        service.acceptBookingByTutor(20L, 99L);
+
+        verify(sessionRepository).saveAll(sessionsCaptor.capture());
+        List<LocalDate> sessionDates = sessionsCaptor.getValue().stream()
+                .map(Session::getSessionDate)
+                .toList();
+
+        assertThat(sessionDates).containsExactly(
+                LocalDate.of(2026, 9, 7),
+                LocalDate.of(2026, 9, 14),
+                LocalDate.of(2026, 9, 21),
+                LocalDate.of(2026, 9, 28),
+                LocalDate.of(2026, 10, 5));
+    }
+
     private void stubBookingDependencies() {
         Parent parent = Parent.builder()
                 .id(1L)
@@ -130,5 +157,35 @@ class BookingServiceImplTest {
         request.setRecurringEndDate(date);
         request.setSchedules(List.of(schedule));
         return request;
+    }
+
+    private Booking recurringMondayBooking() {
+        Parent parent = Parent.builder()
+                .id(1L)
+                .user(User.builder().id(10L).email("parent@example.test").fullName("Parent Test").build())
+                .build();
+        Tutor tutor = Tutor.builder()
+                .id(2L)
+                .user(User.builder().id(20L).email("tutor@example.test").fullName("Tutor Test").build())
+                .build();
+        Subject subject = Subject.builder().id(3L).name("Mathematics").build();
+        Booking booking = Booking.builder()
+                .parent(parent)
+                .tutor(tutor)
+                .subject(subject)
+                .isRecurring(true)
+                .status(BookingStatus.WAITING_TUTOR_CONFIRM)
+                .recurringStartDate(LocalDate.of(2026, 9, 6))
+                .recurringEndDate(LocalDate.of(2026, 10, 6))
+                .schedules(new ArrayList<>())
+                .build();
+        BookingSchedule schedule = BookingSchedule.builder()
+                .booking(booking)
+                .dayOfWeek(1)
+                .startTime(LocalTime.of(8, 0))
+                .endTime(LocalTime.of(10, 0))
+                .build();
+        booking.getSchedules().add(schedule);
+        return booking;
     }
 }

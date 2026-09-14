@@ -14,21 +14,22 @@ import {
   CreditCard
 } from "lucide-react";
 import { cn, formatPrice } from "@/shared/lib/utils";
+import { countScheduleOccurrences } from "@/shared/lib/booking-schedule";
 import { IStudent } from "@/server/_types/student-type";
 import { ITutorDetail, ITutorSubject } from "@/server/_types/tutor-type";
 
-interface Slot {
-  day: number;
-  slot: string;
-  time: string;
-}
+type Slot =
+  | { day: number; slot: string; time: string }
+  | { day: number; startTime: string; endTime: string };
 
 interface Step4Props {
   child: IStudent | undefined;
   tutor: ITutorDetail;
   subject: ITutorSubject | undefined;
-  bookingType: "one-time" | "long-term";
+  bookingType: "one-time" | "long-term" | "recurring";
   selectedSlots: Slot[];
+  startDate: string;
+  endDate: string;
   learningMode: "online" | "offline";
   onBack: () => void;
   onConfirm: () => void;
@@ -45,17 +46,19 @@ function Step4ConfirmationBase({
   subject,
   bookingType,
   selectedSlots,
+  startDate,
+  endDate,
   learningMode,
   onBack,
   onConfirm,
   isLoading
 }: Step4Props) {
   const priceNum = subject?.pricePerSession || 0;
-  const sessionCount = selectedSlots.length;
-  const subtotal = priceNum * sessionCount;
-  // Temporary discount logic for demonstration
-  const discount = learningMode === "online" ? subtotal * 0.1 : 0;
-  const total = subtotal - discount;
+  const sessionCount =
+    bookingType === "one-time"
+      ? selectedSlots.length
+      : countScheduleOccurrences(startDate, endDate, selectedSlots);
+  const estimatedTuition = sessionCount * priceNum;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
@@ -92,7 +95,7 @@ function Step4ConfirmationBase({
                     <div key={i} className="bg-muted px-3 py-1.5 rounded-xl text-xs font-bold text-foreground flex items-center gap-1.5 border border-border">
                       <span>{DAY_LABELS[s.day]}</span>
                       <span className="text-border">|</span>
-                      <span>{s.time}</span>
+                      <span>{"time" in s ? s.time : `${s.startTime} - ${s.endTime}`}</span>
                     </div>
                   ))}
                 </div>
@@ -110,43 +113,29 @@ function Step4ConfirmationBase({
               <div className="space-y-1">
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Hình thức học</p>
                 <p className="font-bold text-foreground">{learningMode === "online" ? "Trực tuyến (Google Meet/Zoom)" : "Trực tiếp tại nhà"}</p>
-                {learningMode === "online" && (
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md inline-block">Đã áp dụng giảm giá 10%</p>
-                )}
               </div>
             </div>
           </div>
 
-          {/* Price Breakdown */}
+          {/* Tuition Estimate */}
           <div className="bg-card rounded-[2.5rem] p-8 text-foreground shadow-sm shadow-primary/5 border border-border transition-all duration-300">
             <h4 className="text-sm font-black mb-6 flex items-center gap-2.5 text-foreground uppercase tracking-wider">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                 <CreditCard size={18} />
               </div>
-              Chi tiết thanh toán
+              Ước tính học phí
             </h4>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm font-medium text-muted-foreground">
-                <span>Học phí ({sessionCount} buổi x {formatPrice(priceNum)})</span>
-                <span className="text-foreground font-bold">{formatPrice(subtotal)}</span>
-              </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                  <span>Giảm giá (Ưu đãi Online)</span>
-                  <span>-{formatPrice(discount)}</span>
-                </div>
-              )}
-              <div className="border-t border-border pt-6 mt-6 flex justify-between items-end">
-                <div className="space-y-1">
-                  <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] opacity-80">Tổng cộng thanh toán</p>
-                  <p className="text-4xl font-black text-blue-600 dark:text-blue-500 tracking-tighter">
-                    {total.toLocaleString("vi-VN")}
-                    <span className="text-xl ml-1 font-bold">đ</span>
-                  </p>
-                </div>
-                <div className="text-right pb-1">
-                  <p className="text-[10px] text-muted-foreground italic font-semibold opacity-60">Đã bao gồm VAT</p>
-                </div>
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">
+                {sessionCount} buổi
+              </p>
+              <p className="text-4xl font-black text-blue-600 dark:text-blue-500 tracking-tighter">
+                {formatPrice(estimatedTuition)}
+              </p>
+              <div className="border-t border-border pt-4">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Số tiền thực tế được xác nhận theo chính sách thanh toán của hệ thống.
+                </p>
               </div>
             </div>
           </div>

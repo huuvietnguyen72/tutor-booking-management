@@ -308,6 +308,8 @@ export default function BookingPage() {
                   )}
                   bookingType={bookingType}
                   selectedSlots={selectedSlots}
+                  startDate={startDate}
+                  endDate={endDate}
                   learningMode={learningMode}
                   onBack={() => setStep(3)}
                   onConfirm={handleConfirm}

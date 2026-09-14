@@ -153,4 +153,21 @@ describe("Step2Schedule", () => {
       expect(onSelectedSlotsChange).toHaveBeenCalledWith([sundaySlot]);
     });
   });
+
+  it("blocks a recurring range without a selected weekday", () => {
+    render(
+      <Step2Schedule
+        {...scheduleProps({
+          bookingType: "long-term",
+          selectedSlots: [mondaySlot],
+          endDate: "2026-09-06",
+        })}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "TIẾP TỤC" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Khoảng ngày không chứa buổi học phù hợp với lịch đã chọn",
+    );
+  });
 });

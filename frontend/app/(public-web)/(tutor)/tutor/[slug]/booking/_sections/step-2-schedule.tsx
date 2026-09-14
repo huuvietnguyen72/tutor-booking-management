@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo } from "react";
 import { formatToYYYYMMDD } from "@/shared/lib/utils";
-import { getIsoWeekday } from "@/shared/lib/booking-schedule";
+import {
+  countScheduleOccurrences,
+  getIsoWeekday,
+} from "@/shared/lib/booking-schedule";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
@@ -48,6 +51,17 @@ export function Step2Schedule({
   const { data: availabilityResponse, isLoading } = useGetTutorAvailability(tutorId);
   const availability = availabilityResponse || [];
   const selectedIsoDay = startDate ? getIsoWeekday(startDate) : null;
+  const recurringSessionCount = countScheduleOccurrences(
+    startDate,
+    endDate,
+    selectedSlots,
+  );
+  const recurringRangeError =
+    bookingType === "long-term" &&
+    selectedSlots.length > 0 &&
+    recurringSessionCount === 0
+      ? "Khoảng ngày không chứa buổi học phù hợp với lịch đã chọn"
+      : "";
 
   // Map tutor availability to the format expected by the grid
   const availableSlots = useMemo(() => {
@@ -101,8 +115,9 @@ export function Step2Schedule({
 
   const isScheduleValid =
     selectedSlots.length > 0 &&
-    (bookingType !== "one-time" ||
-      selectedSlots.every((slot) => slot.day === selectedIsoDay));
+    (bookingType === "long-term"
+      ? recurringSessionCount > 0
+      : selectedSlots.every((slot) => slot.day === selectedIsoDay));
   const selectedDayLabel = DAYS.find((day) => day.value === selectedIsoDay)?.label;
 
   return (
@@ -209,9 +224,9 @@ export function Step2Schedule({
               Ngày bạn chọn là {selectedDayLabel}.
             </p>
           )}
-          {scheduleError && (
+          {(scheduleError || recurringRangeError) && (
             <p role="alert" className="text-xs font-medium text-destructive">
-              {scheduleError}
+              {scheduleError || recurringRangeError}
             </p>
           )}
           <p className="text-xs text-muted-foreground leading-relaxed">
