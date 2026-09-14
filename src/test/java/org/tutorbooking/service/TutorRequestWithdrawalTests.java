@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.tutorbooking.domain.entity.Parent;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.inOrder;
 
 @ExtendWith(MockitoExtension.class)
 class TutorRequestWithdrawalTests {
@@ -245,6 +247,24 @@ class TutorRequestWithdrawalTests {
                 .get(5, TimeUnit.SECONDS);
 
         assertEquals(TutorRequestStatus.SEARCHING, request.getStatus());
+    }
+
+    @Test
+    void acceptingAnApplicationLocksTheRequestBeforeWritingApplicationState() {
+        Tutor tutor = tutor(2L);
+        TutorApplication application = application(tutor, TutorApplicationStatus.PENDING, TutorRequestStatus.HAS_APPLICANTS);
+        Parent parent = Parent.builder().id(application.getRequest().getParent().getId()).build();
+        when(parentRepository.findByUserId(TUTOR_USER_ID)).thenReturn(Optional.of(parent));
+        when(tutorApplicationRepository.findById(APPLICATION_ID)).thenReturn(Optional.of(application));
+        when(tutorRequestRepository.findByIdForUpdate(application.getRequest().getId()))
+                .thenReturn(Optional.of(application.getRequest()));
+
+        service.acceptApplication(APPLICATION_ID, TUTOR_USER_ID);
+
+        InOrder calls = inOrder(tutorRequestRepository, tutorApplicationRepository);
+        calls.verify(tutorApplicationRepository).findById(APPLICATION_ID);
+        calls.verify(tutorRequestRepository).findByIdForUpdate(application.getRequest().getId());
+        calls.verify(tutorApplicationRepository).save(application);
     }
 
     private void stubWithdrawal(Tutor tutor, TutorApplication application) {

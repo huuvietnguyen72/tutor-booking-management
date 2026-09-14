@@ -2,6 +2,7 @@ package org.tutorbooking.service.Impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.tutorbooking.domain.entity.*;
 import org.tutorbooking.domain.enums.TutorApplicationStatus;
@@ -206,7 +207,7 @@ public class TutorRequestServiceImpl implements TutorRequestService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void withdrawApplication(Long applicationId, Long userId) {
         Tutor tutor = tutorRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Gia sư không tồn tại"));
@@ -280,11 +281,13 @@ public class TutorRequestServiceImpl implements TutorRequestService {
             throw new RuntimeException("Ứng tuyển không ở trạng thái chờ phản hồi");
         }
 
+        TutorRequest request = tutorRequestRepository.findByIdForUpdate(application.getRequest().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Yêu cầu không tồn tại"));
+
         application.setStatus(TutorApplicationStatus.ACCEPTED);
         application.setRespondedAt(LocalDateTime.now());
 
         // Cập nhật trạng thái yêu cầu thành MATCHED
-        TutorRequest request = application.getRequest();
         request.setStatus(TutorRequestStatus.MATCHED);
         request.setApprovedAt(LocalDateTime.now());
 
