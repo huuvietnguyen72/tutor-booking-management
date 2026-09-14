@@ -51,4 +51,9 @@ public interface TutorApplicationRepository extends JpaRepository<TutorApplicati
 
     // Đếm số ứng tuyển chưa được phản hồi
     long countByRequestIdAndStatus(Long requestId, TutorApplicationStatus status);
+
+    long countByRequestIdAndStatusAndIdNot(
+            Long requestId,
+            TutorApplicationStatus status,
+            Long applicationId);
 }

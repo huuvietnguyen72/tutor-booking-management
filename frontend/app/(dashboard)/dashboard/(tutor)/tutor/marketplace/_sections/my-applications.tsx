@@ -20,18 +20,17 @@ import { ConfirmDialog } from "@/shared/components/ui/confirm-dialog";
 import { useState } from "react";
 
 export function MyApplications() {
-  const { data: applications = [], isLoading, refetch } = useGetMyApplications();
+  const { data: applications = [], isLoading } = useGetMyApplications();
   const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawApplication();
   const [withdrawId, setWithdrawId] = useState<number | null>(null);
 
   const handleWithdraw = () => {
-    if (!withdrawId) return;
+    if (withdrawId === null) return;
     const toastId = toast.loading("Đang rút hồ sơ...");
     withdraw(withdrawId, {
       onSuccess: () => {
         toast.success("Đã rút hồ sơ thành công", { id: toastId });
         setWithdrawId(null);
-        refetch();
       },
       onError: (err: any) => {
         toast.error(formatErrorMessage(err, "Không thể rút hồ sơ"), { id: toastId });
@@ -124,19 +123,19 @@ export function MyApplications() {
                   {status.label}
                 </Badge>
                 <span className="text-[10px] font-bold text-muted-foreground">
-                  {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString("vi-VN") : "N/A"}
+                  {new Date(app.createdAt).toLocaleDateString("vi-VN")}
                 </span>
               </div>
 
               {/* Course Info */}
               <div className="mb-6">
                 <h3 className="text-lg font-black text-foreground mb-2 line-clamp-1 group-hover:text-primary transition-colors">
-                  {app.request?.subjectName || "N/A"}
+                  {app.subjectName}
                 </h3>
                 <div className="space-y-2">
                    <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase">
                       <User size={14} className="text-primary/60" />
-                      Phụ huynh: {app.request?.studentName}
+                      Phụ huynh: {app.parentName}
                    </div>
                    <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase">
                       <DollarSign size={14} className="text-primary/60" />
@@ -163,7 +162,7 @@ export function MyApplications() {
                     variant="ghost" 
                     size="sm"
                     className="h-8 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest group"
-                    onClick={() => setWithdrawId(app.requestId)}
+                    onClick={() => setWithdrawId(app.id)}
                   >
                     <Undo2 size={12} className="mr-1 group-hover:-translate-x-1 transition-transform" />
                     Rút hồ sơ
@@ -184,6 +183,8 @@ export function MyApplications() {
         confirmText="Xác nhận rút"
         cancelText="Quay lại"
         variant="danger"
+        isPending={isWithdrawing}
+        pendingText="Đang rút..."
       />
     </div>
   );

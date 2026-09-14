@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 interface ConfirmDialogProps {
@@ -21,6 +21,8 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   variant?: "danger" | "primary";
+  isPending?: boolean;
+  pendingText?: string;
 }
 
 export function ConfirmDialog({
@@ -32,9 +34,16 @@ export function ConfirmDialog({
   confirmText = "Xác nhận",
   cancelText = "Hủy",
   variant = "primary",
+  isPending = false,
+  pendingText = "Đang xử lý...",
 }: ConfirmDialogProps) {
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !isPending) onClose();
+      }}
+    >
       <DialogContent className="max-w-md gap-0 bg-white p-0">
         <div className="p-6">
           <div className="flex items-start gap-4">
@@ -61,16 +70,15 @@ export function ConfirmDialog({
             type="button"
             variant="outline"
             onClick={onClose}
+            disabled={isPending}
             className="flex-1 rounded-xl bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 sm:flex-none sm:px-6"
           >
             {cancelText}
           </Button>
           <Button
             type="button"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
+            onClick={onConfirm}
+            disabled={isPending}
             className={cn(
               "flex-1 rounded-xl font-semibold shadow-sm sm:flex-none sm:px-6",
               variant === "danger"
@@ -78,7 +86,8 @@ export function ConfirmDialog({
                 : "bg-blue-600 text-white hover:bg-blue-700"
             )}
           >
-            {confirmText}
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+            {isPending ? pendingText : confirmText}
           </Button>
         </DialogFooter>
       </DialogContent>

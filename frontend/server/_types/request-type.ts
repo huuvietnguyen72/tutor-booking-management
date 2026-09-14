@@ -52,13 +52,18 @@ export interface IApplicant {
 export interface IApplication {
   id: number;
   requestId: number;
-  request?: IRequest;
+  parentId: number;
+  parentName: string;
+  subjectId: number;
+  subjectName: string;
+  gradeLevel: number;
   tutorId: number;
   tutorName?: string;
   proposedPrice: number;
   coverLetter: string;
   status: ApplicationStatus;
-  appliedAt: string;
+  respondedAt?: string | null;
+  createdAt: string;
 }
 
 export interface ICreateRequestRequest {

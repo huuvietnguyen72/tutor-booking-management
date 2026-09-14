@@ -206,6 +206,7 @@ public class TutorRequestServiceImpl implements TutorRequestService {
     }
 
     @Override
+    @Transactional
     public void withdrawApplication(Long applicationId, Long userId) {
         Tutor tutor = tutorRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Gia sư không tồn tại"));
@@ -220,7 +221,16 @@ public class TutorRequestServiceImpl implements TutorRequestService {
             throw new RuntimeException("Không thể rút lại ứng tuyển ở trạng thái hiện tại");
         }
 
+        TutorRequest request = application.getRequest();
+        long remainingPendingApplications = tutorApplicationRepository.countByRequestIdAndStatusAndIdNot(
+                request.getId(), TutorApplicationStatus.PENDING, applicationId);
+
         tutorApplicationRepository.delete(application);
+
+        if (remainingPendingApplications == 0 && request.getStatus() == TutorRequestStatus.HAS_APPLICANTS) {
+            request.setStatus(TutorRequestStatus.SEARCHING);
+            tutorRequestRepository.save(request);
+        }
     }
 
     @Override

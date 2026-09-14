@@ -120,7 +120,7 @@ export const useApplyForRequest = (requestId: string | number) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { coverLetter: string; proposedPrice: number }) => {
-      const res = await axiosInstance.post<ApiResponse<IApplication>>(REQUEST_PATHS.APPLY(requestId.toString()), payload);
+      const res = await axiosInstance.post<ApiResponse<string>>(REQUEST_PATHS.APPLY(requestId.toString()), payload);
       return res.data;
     },
     onSuccess: () => {
@@ -151,6 +151,7 @@ export const useWithdrawApplication = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["MY_APPLICATIONS"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REQUESTS.GET_LIST });
     },
   });
 };

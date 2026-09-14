@@ -1,8 +1,9 @@
 "use client";
 
-import { Sparkles, TrendingUp, Users, Inbox, Search } from "lucide-react";
+import { Sparkles, TrendingUp, Users, Inbox, Search, FileText } from "lucide-react";
 import { JobList } from "./_sections/job-list";
 import { DirectInvitations } from "./_sections/direct-invitations";
+import { MyApplications } from "./_sections/my-applications";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { useSearchTutors } from "@/server/_actions/tutor-action";
 
@@ -36,7 +37,7 @@ export default function MarketplacePage() {
 
       <Tabs defaultValue="direct" className="space-y-8">
         <div className="flex items-center justify-center md:justify-start">
-          <TabsList className="bg-muted/40 p-1 rounded-2xl border border-border/50 h-auto gap-1">
+          <TabsList className="h-auto w-full flex-wrap justify-start gap-1 rounded-2xl border border-border/50 bg-muted/40 p-1 md:w-auto">
             <TabsTrigger 
               value="direct" 
               className="rounded-xl px-6 py-3 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-xl shadow-primary/10 transition-all font-black uppercase tracking-widest text-[10px] flex items-center gap-2"
@@ -50,6 +51,13 @@ export default function MarketplacePage() {
             >
               <Search size={14} />
               Chợ lớp học
+            </TabsTrigger>
+            <TabsTrigger
+              value="applications"
+              className="rounded-xl px-4 py-3 data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-xl shadow-primary/10 transition-all font-black uppercase tracking-widest text-[10px] flex items-center gap-2 md:px-6"
+            >
+              <FileText size={14} />
+              Ứng tuyển của tôi
             </TabsTrigger>
           </TabsList>
         </div>
@@ -99,6 +107,10 @@ export default function MarketplacePage() {
           </div>
 
           <JobList />
+        </TabsContent>
+
+        <TabsContent value="applications" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+          <MyApplications />
         </TabsContent>
       </Tabs>
     </div>
