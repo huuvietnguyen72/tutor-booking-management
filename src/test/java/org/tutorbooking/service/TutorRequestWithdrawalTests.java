@@ -256,14 +256,14 @@ class TutorRequestWithdrawalTests {
         Parent parent = Parent.builder().id(application.getRequest().getParent().getId()).build();
         when(parentRepository.findByUserId(TUTOR_USER_ID)).thenReturn(Optional.of(parent));
         when(tutorApplicationRepository.findById(APPLICATION_ID)).thenReturn(Optional.of(application));
-        when(tutorRequestRepository.findByIdForUpdate(application.getRequest().getId()))
+        when(tutorRequestRepository.findByApplicationIdForUpdate(APPLICATION_ID))
                 .thenReturn(Optional.of(application.getRequest()));
 
         service.acceptApplication(APPLICATION_ID, TUTOR_USER_ID);
 
         InOrder calls = inOrder(tutorRequestRepository, tutorApplicationRepository);
+        calls.verify(tutorRequestRepository).findByApplicationIdForUpdate(APPLICATION_ID);
         calls.verify(tutorApplicationRepository).findById(APPLICATION_ID);
-        calls.verify(tutorRequestRepository).findByIdForUpdate(application.getRequest().getId());
         calls.verify(tutorApplicationRepository).save(application);
     }
 

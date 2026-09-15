@@ -268,21 +268,20 @@ public class TutorRequestServiceImpl implements TutorRequestService {
 
     @Override
     public void acceptApplication(Long applicationId, Long userId) {
+        TutorRequest request = tutorRequestRepository.findByApplicationIdForUpdate(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Yêu cầu không tồn tại"));
         Parent parent = parentRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Parent không tồn tại"));
         TutorApplication application = tutorApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ứng tuyển không tồn tại"));
 
-        if (!application.getRequest().getParent().getId().equals(parent.getId())) {
+        if (!request.getParent().getId().equals(parent.getId())) {
             throw new RuntimeException("Không có quyền chấp nhận ứng tuyển này");
         }
 
         if (application.getStatus() != TutorApplicationStatus.PENDING) {
             throw new RuntimeException("Ứng tuyển không ở trạng thái chờ phản hồi");
         }
-
-        TutorRequest request = tutorRequestRepository.findByIdForUpdate(application.getRequest().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Yêu cầu không tồn tại"));
 
         application.setStatus(TutorApplicationStatus.ACCEPTED);
         application.setRespondedAt(LocalDateTime.now());

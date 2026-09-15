@@ -34,6 +34,13 @@ public interface TutorRequestRepository extends JpaRepository<TutorRequest, Long
     @Query("SELECT tr FROM TutorRequest tr WHERE tr.id = :requestId")
     Optional<TutorRequest> findByIdForUpdate(@Param("requestId") Long requestId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT tr FROM TutorRequest tr
+            WHERE tr.id = (SELECT ta.request.id FROM TutorApplication ta WHERE ta.id = :applicationId)
+            """)
+    Optional<TutorRequest> findByApplicationIdForUpdate(@Param("applicationId") Long applicationId);
+
     // Lấy danh sách yêu cầu theo danh sách status
     @Query("""
             SELECT tr FROM TutorRequest tr

@@ -73,6 +73,9 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
     @Autowired
     private ApplicationReadBarrier applicationReadBarrier;
 
+    @Autowired
+    private RequestLockBarrier requestLockBarrier;
+
     private Long requestId;
     private List<Long> applicationIds;
     private List<Long> tutorIds;
@@ -163,6 +166,30 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
                 .isEqualTo(TutorRequestStatus.SEARCHING);
     }
 
+    @Test
+    void concurrentAcceptancesOfDifferentPendingApplicationsLeaveOneAcceptedAndTheRequestMatched() throws Exception {
+        applicationReadBarrier.awaitApplications(Set.copyOf(applicationIds));
+        requestLockBarrier.awaitRequestLocks(2);
+        try {
+            CompletableFuture.allOf(
+                    CompletableFuture.runAsync(() -> tutorRequestService.acceptApplication(
+                            applicationIds.get(0), userIds.get(0))),
+                    CompletableFuture.runAsync(() -> tutorRequestService.acceptApplication(
+                            applicationIds.get(1), userIds.get(0))))
+                    .get(10, TimeUnit.SECONDS);
+        } finally {
+            applicationReadBarrier.clear();
+            requestLockBarrier.clear();
+        }
+
+        assertThat(tutorApplicationRepository.findAllById(applicationIds))
+                .extracting(TutorApplication::getStatus)
+                .containsExactlyInAnyOrder(TutorApplicationStatus.ACCEPTED, TutorApplicationStatus.REJECTED);
+        assertThat(tutorRequestRepository.findById(requestId)).get()
+                .extracting(TutorRequest::getStatus)
+                .isEqualTo(TutorRequestStatus.MATCHED);
+    }
+
     private User user(String prefix, Role role) {
         return User.builder()
                 .email(prefix + "@test.local")
@@ -211,11 +238,38 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
                         }
                     });
         }
+
+        @Bean
+        @Primary
+        TutorRequestRepository synchronizedTutorRequestRepository(
+                @Qualifier("tutorRequestRepository") TutorRequestRepository delegate,
+                RequestLockBarrier requestLockBarrier) {
+            return (TutorRequestRepository) Proxy.newProxyInstance(
+                    TutorRequestRepository.class.getClassLoader(),
+                    new Class<?>[] { TutorRequestRepository.class },
+                    (proxy, method, arguments) -> {
+                        try {
+                            if ("findByIdForUpdate".equals(method.getName())
+                                    || "findByApplicationIdForUpdate".equals(method.getName())) {
+                                requestLockBarrier.awaitIfTracked();
+                            }
+                            return method.invoke(delegate, arguments);
+                        } catch (InvocationTargetException exception) {
+                            throw exception.getCause();
+                        }
+                    });
+        }
+
+        @Bean
+        RequestLockBarrier requestLockBarrier(ApplicationReadBarrier applicationReadBarrier) {
+            return new RequestLockBarrier(applicationReadBarrier::bypass);
+        }
     }
 
     static class ApplicationReadBarrier {
         private volatile Set<Long> applicationIds = Set.of();
         private volatile CountDownLatch applicationsRead;
+        private volatile boolean bypassed;
 
         void awaitApplications(Set<Long> applicationIds) {
             this.applicationIds = applicationIds;
@@ -224,7 +278,7 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
 
         void awaitIfTracked(Long applicationId) throws InterruptedException {
             CountDownLatch latch = applicationsRead;
-            if (latch == null || !applicationIds.contains(applicationId)) {
+            if (bypassed || latch == null || !applicationIds.contains(applicationId)) {
                 return;
             }
 
@@ -235,6 +289,39 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
         void clear() {
             applicationIds = Set.of();
             applicationsRead = null;
+            bypassed = false;
+        }
+
+        void bypass() {
+            bypassed = true;
+        }
+    }
+
+    static class RequestLockBarrier {
+        private volatile CountDownLatch requestLocks;
+        private final Runnable applicationReadBarrierBypass;
+
+        RequestLockBarrier(Runnable applicationReadBarrierBypass) {
+            this.applicationReadBarrierBypass = applicationReadBarrierBypass;
+        }
+
+        void awaitRequestLocks(int concurrentRequests) {
+            requestLocks = new CountDownLatch(concurrentRequests);
+        }
+
+        void awaitIfTracked() throws InterruptedException {
+            CountDownLatch latch = requestLocks;
+            if (latch == null) {
+                return;
+            }
+
+            applicationReadBarrierBypass.run();
+            latch.countDown();
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        }
+
+        void clear() {
+            requestLocks = null;
         }
     }
 }
