@@ -10,7 +10,7 @@
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "node ../scripts/run-seeded-e2e.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
