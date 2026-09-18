@@ -98,7 +98,23 @@ class TutorRequestWithdrawalTests {
         service.withdrawApplication(APPLICATION_ID, TUTOR_USER_ID);
 
         verify(tutorApplicationRepository).delete(application);
-        verify(tutorRequestRepository).findByIdForUpdate(application.getRequest().getId());
+        verify(tutorRequestRepository).findByApplicationIdForUpdate(APPLICATION_ID);
+    }
+
+    @Test
+    void withdrawalLocksTheRequestBeforeReadingTheApplication() {
+        Tutor tutor = tutor(2L);
+        TutorApplication application = application(tutor, TutorApplicationStatus.PENDING, TutorRequestStatus.HAS_APPLICANTS);
+        stubWithdrawal(tutor, application);
+        stubRequestLock(application);
+        remainingPendingApplications = 1L;
+
+        service.withdrawApplication(APPLICATION_ID, TUTOR_USER_ID);
+
+        InOrder calls = inOrder(tutorRequestRepository, tutorApplicationRepository);
+        calls.verify(tutorRequestRepository).findByApplicationIdForUpdate(APPLICATION_ID);
+        calls.verify(tutorApplicationRepository).findById(APPLICATION_ID);
+        calls.verify(tutorApplicationRepository).delete(application);
     }
 
     @Test
@@ -108,6 +124,7 @@ class TutorRequestWithdrawalTests {
         Tutor anotherTutor = tutor(3L);
         when(tutorRepository.findByUserId(TUTOR_USER_ID)).thenReturn(Optional.of(anotherTutor));
         when(tutorApplicationRepository.findById(APPLICATION_ID)).thenReturn(Optional.of(application));
+        stubRequestLock(application);
 
         assertThrows(RuntimeException.class, () -> service.withdrawApplication(APPLICATION_ID, TUTOR_USER_ID));
 
@@ -119,6 +136,7 @@ class TutorRequestWithdrawalTests {
         Tutor tutor = tutor(2L);
         TutorApplication application = application(tutor, TutorApplicationStatus.ACCEPTED, TutorRequestStatus.MATCHED);
         stubWithdrawal(tutor, application);
+        stubRequestLock(application);
 
         assertThrows(RuntimeException.class, () -> service.withdrawApplication(APPLICATION_ID, TUTOR_USER_ID));
 
@@ -130,6 +148,7 @@ class TutorRequestWithdrawalTests {
         Tutor tutor = tutor(2L);
         TutorApplication application = application(tutor, TutorApplicationStatus.REJECTED, TutorRequestStatus.HAS_APPLICANTS);
         stubWithdrawal(tutor, application);
+        stubRequestLock(application);
 
         assertThrows(RuntimeException.class, () -> service.withdrawApplication(APPLICATION_ID, TUTOR_USER_ID));
 
@@ -220,7 +239,7 @@ class TutorRequestWithdrawalTests {
             return Answers.RETURNS_DEFAULTS.answer(invocation);
         });
         TutorRequestRepository lockingRequests = mock(TutorRequestRepository.class, invocation -> {
-            if ("findByIdForUpdate".equals(invocation.getMethod().getName())) {
+            if ("findByApplicationIdForUpdate".equals(invocation.getMethod().getName())) {
                 requestLock.lock();
                 requestLockUsed.set(true);
                 return Optional.of(request);
@@ -273,7 +292,7 @@ class TutorRequestWithdrawalTests {
     }
 
     private void stubRequestLock(TutorApplication application) {
-        when(tutorRequestRepository.findByIdForUpdate(application.getRequest().getId()))
+        when(tutorRequestRepository.findByApplicationIdForUpdate(application.getId()))
                 .thenReturn(Optional.of(application.getRequest()));
     }
 

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.tutorbooking.domain.entity.Parent;
 import org.tutorbooking.domain.entity.Subject;
 import org.tutorbooking.domain.entity.Tutor;
@@ -30,6 +31,7 @@ import org.tutorbooking.repository.TutorRequestRepository;
 import org.tutorbooking.repository.UserRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.util.List;
@@ -37,9 +39,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest(properties = {
         "spring.ai.openai.api-key=test-placeholder",
@@ -69,6 +73,9 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
 
     @Autowired
     private TutorRequestService tutorRequestService;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
     @Autowired
     private ApplicationReadBarrier applicationReadBarrier;
@@ -147,8 +154,7 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
 
     @Test
     void concurrentWithdrawalsSeeTheCommittedDeletionBeforeCountingPendingApplications() throws Exception {
-        Set<Long> applications = Set.copyOf(applicationIds);
-        applicationReadBarrier.awaitApplications(applications);
+        requestLockBarrier.awaitRequestLocks(2);
         try {
             CompletableFuture.allOf(
                     CompletableFuture.runAsync(() -> tutorRequestService.withdrawApplication(
@@ -157,13 +163,63 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
                             applicationIds.get(1), tutorUserIds.get(1))))
                     .get(10, TimeUnit.SECONDS);
         } finally {
-            applicationReadBarrier.clear();
+            requestLockBarrier.clear();
         }
 
         assertThat(tutorApplicationRepository.countByRequestId(requestId)).isZero();
         assertThat(tutorRequestRepository.findById(requestId)).get()
                 .extracting(TutorRequest::getStatus)
                 .isEqualTo(TutorRequestStatus.SEARCHING);
+    }
+
+    @Test
+    void withdrawalIsRejectedWhenAConcurrentTransactionHasAcceptedTheSameApplication() throws Exception {
+        CountDownLatch acceptedStateStaged = new CountDownLatch(1);
+        CountDownLatch releaseAcceptance = new CountDownLatch(1);
+        CompletableFuture<Void> acceptingTransaction = CompletableFuture.runAsync(() ->
+                transactionTemplate.executeWithoutResult(status -> {
+                    TutorRequest lockedRequest = tutorRequestRepository.findByIdForUpdate(requestId).orElseThrow();
+                    TutorApplication application = tutorApplicationRepository.findById(applicationIds.get(0)).orElseThrow();
+                    application.setStatus(TutorApplicationStatus.ACCEPTED);
+                    application.setRespondedAt(LocalDateTime.now());
+                    tutorApplicationRepository.saveAndFlush(application);
+                    lockedRequest.setStatus(TutorRequestStatus.MATCHED);
+                    lockedRequest.setApprovedAt(LocalDateTime.now());
+                    tutorRequestRepository.saveAndFlush(lockedRequest);
+                    acceptedStateStaged.countDown();
+                    try {
+                        if (!releaseAcceptance.await(10, TimeUnit.SECONDS)) {
+                            throw new IllegalStateException("Concurrent acceptance transaction was not released");
+                        }
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        throw new IllegalStateException(exception);
+                    }
+                }));
+
+        try {
+            assertThat(acceptedStateStaged.await(10, TimeUnit.SECONDS)).isTrue();
+            requestLockBarrier.expectLockArrival();
+            CompletableFuture<Void> withdrawal = CompletableFuture.runAsync(() -> tutorRequestService.withdrawApplication(
+                    applicationIds.get(0), tutorUserIds.get(0)));
+            requestLockBarrier.awaitLockArrival();
+            releaseAcceptance.countDown();
+            acceptingTransaction.get(10, TimeUnit.SECONDS);
+
+            assertThatThrownBy(() -> withdrawal.get(10, TimeUnit.SECONDS))
+                    .isInstanceOf(ExecutionException.class)
+                    .hasCauseInstanceOf(RuntimeException.class)
+                    .hasRootCauseMessage("Không thể rút lại ứng tuyển ở trạng thái hiện tại");
+            assertThat(tutorApplicationRepository.findById(applicationIds.get(0))).get()
+                    .extracting(TutorApplication::getStatus)
+                    .isEqualTo(TutorApplicationStatus.ACCEPTED);
+            assertThat(tutorRequestRepository.findById(requestId)).get()
+                    .extracting(TutorRequest::getStatus)
+                    .isEqualTo(TutorRequestStatus.MATCHED);
+        } finally {
+            releaseAcceptance.countDown();
+            requestLockBarrier.clear();
+        }
     }
 
     @Test
@@ -299,6 +355,7 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
 
     static class RequestLockBarrier {
         private volatile CountDownLatch requestLocks;
+        private volatile CountDownLatch lockArrivals;
         private final Runnable applicationReadBarrierBypass;
 
         RequestLockBarrier(Runnable applicationReadBarrierBypass) {
@@ -309,7 +366,20 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
             requestLocks = new CountDownLatch(concurrentRequests);
         }
 
+        void expectLockArrival() {
+            lockArrivals = new CountDownLatch(1);
+        }
+
+        void awaitLockArrival() throws InterruptedException {
+            CountDownLatch arrivals = lockArrivals;
+            assertThat(arrivals != null && arrivals.await(5, TimeUnit.SECONDS)).isTrue();
+        }
+
         void awaitIfTracked() throws InterruptedException {
+            CountDownLatch arrivals = lockArrivals;
+            if (arrivals != null) {
+                arrivals.countDown();
+            }
             CountDownLatch latch = requestLocks;
             if (latch == null) {
                 return;
@@ -322,6 +392,7 @@ class TutorRequestWithdrawalConcurrencyIntegrationTest {
 
         void clear() {
             requestLocks = null;
+            lockArrivals = null;
         }
     }
 }
